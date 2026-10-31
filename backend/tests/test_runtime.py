@@ -1599,3 +1599,48 @@ async def test_a_failed_answer_says_so(runtime, partial):
     assert len(mira) == 1 and mira[0]['status'] == 'done' and mira[0]['text'].endswith(prompts.RUN_FAILED)
     if partial:
         assert mira[0]['text'].startswith('The numbers are… ')
+
+
+async def test_a_reply_that_tries_an_unoffered_tool_is_written_again_with_tools(runtime):
+    # "Improve the file you wrote" at normal effort: the model writes its tool call as text, which is dropped.
+    # Instead of an empty message, the same message is written again at deep effort, where the tools are.
+    rt = await runtime([
+        rule(when(agent='mira', profile='decide'), answer()),
+        rule(when(profile='decide'), quiet()),
+        rule(when(profile='utility'), utility()),
+        rule(when(profile='normal'), FakeReply('\n\n', wanted_tools=True, delay=0)),
+        lambda c: FakeReply(tool_calls=[ToolCall('w', 'write_file', '{"path":"plan.md","content":"v2"}')], delay=0)
+        if c.profile == 'deep' and not any(m.role == 'tool' for m in c.messages) else None,
+        rule(when(profile='deep'), FakeReply('Updated plan.md.', delay=0)),
+    ])
+    await rt.post('Mira, how can we improve it?')
+    await rt.idle()
+    profiles = [c.profile for c in rt.model.calls if c.agent == 'mira' and c.profile != 'decide']
+    assert profiles[0] == 'normal' and profiles[1:] == ['deep', 'deep']
+    assert sandbox_tools(next(c for c in rt.model.calls if c.profile == 'deep'))
+    mira = [m for m in await rt.messages() if m['author'] == 'mira']
+    assert len(mira) == 1 and mira[0]['text'] == 'Updated plan.md.'
+
+
+async def test_a_message_never_starts_with_blank_lines(runtime):
+    rt = await runtime([
+        rule(when(agent='mira', profile='decide'), answer()),
+        rule(when(profile='decide'), quiet()),
+        rule(when(profile='utility'), utility()),
+        rule(when(profile='normal'), FakeReply('\n\n  Runway is 14 months.', delay=0)),
+    ])
+    await rt.post('Mira, runway?')
+    await rt.idle()
+    assert [m['text'] for m in await rt.messages() if m['author'] == 'mira'] == ['Runway is 14 months.']
+
+
+async def test_a_reply_with_nothing_to_show_leaves_no_empty_message(runtime):
+    rt = await runtime([
+        rule(when(agent='mira', profile='decide'), answer()),
+        rule(when(profile='decide'), quiet()),
+        rule(when(profile='utility'), utility()),
+        rule(when(profile='normal'), FakeReply('\n\n', delay=0)),
+    ])
+    await rt.post('Mira, anything?')
+    await rt.idle()
+    assert not [m for m in await rt.messages() if m['author'] == 'mira' and not m['text'].strip()]

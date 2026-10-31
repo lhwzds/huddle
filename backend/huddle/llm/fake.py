@@ -15,6 +15,7 @@ class FakeReply:
     first_delay: float = 0.0
     before_done: Callable[[], Awaitable[None]] | None = None
     reasoning: str = ""
+    wanted_tools: bool = False  # as if the model had written tool markup as text
 
 @dataclass
 class FakeCall:
@@ -67,7 +68,8 @@ class FakeLLM:
             if reply.before_done:
                 await reply.before_done()
             completed = True
-            yield Done("tool_calls" if reply.tool_calls else "stop", None, reply.reasoning)
+            yield Done("tool_calls" if reply.tool_calls else "stop", None, reply.reasoning,
+                       wanted_tools=reply.wanted_tools)
         finally:
             if not completed:
                 self.cancelled += 1

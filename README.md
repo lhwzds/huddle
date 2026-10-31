@@ -134,7 +134,7 @@ uv run --project backend python eval/run.py --base http://localhost:8080 --judge
 
 ## Tests
 
-- Backend (249 tests, scripted fake model, no network): `cd backend && uv run pytest -q`
+- Backend (252 tests, scripted fake model, no network): `cd backend && uv run pytest -q`
 - Frontend: `cd frontend && npm test && npm run typecheck && npm run build`
 - Sandbox: `cd sandbox && uv run --with pytest pytest -q`
 - Eval runner: `uv run --project backend --with pytest pytest eval/tests -q`

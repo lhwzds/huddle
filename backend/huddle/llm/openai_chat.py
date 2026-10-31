@@ -174,7 +174,7 @@ class OpenAIChat:
                             yielded = True
                             yield ToolCallDone(ToolCall(**calls[index]))
                         yielded = True
-                        yield Done(finish_reason, usage, "".join(reasoning))
+                        yield Done(finish_reason, usage, "".join(reasoning), wanted_tools=markup.dropping)
                         return
                 except (httpx.TransportError, httpx.HTTPStatusError) as exc:
                     retryable = isinstance(exc, httpx.TransportError) or exc.response.status_code == 429 or exc.response.status_code >= 500

@@ -79,6 +79,8 @@ class AgentRun:
         self._pending_steps = []
         self._remembered = False
         self._offered = set()  # names of the tools offered in the latest model call
+        self._wanted_tools = False  # the latest model call tried to use a tool it was not given
+        self._escalated = False
         self._web_calls = 0
         self._flush_s = ctx.cfg["limits"]["flush_interval_s"]
         self._over_budget = False
@@ -173,6 +175,9 @@ class AgentRun:
                 self._typing = False
 
     async def _text(self, text):
+        if self.message_id is None and not self._buffer and self._seam_visible is None:
+            # A message starts with its first real word, never with blank lines.
+            text = text.lstrip()
         if text:
             if self._seam_visible is not None:
                 # A steered continuation must not run into the text already shown. If the model opens
@@ -236,6 +241,7 @@ class AgentRun:
                                 log.warning("Ignored an unoffered tool call from %s", self.agent.key)
                         elif isinstance(event, Done):
                             self._last_reasoning = event.reasoning or ""
+                            self._wanted_tools = bool(getattr(event, "wanted_tools", False))
                             ended = True
                     next_event = None
                 if incoming.done() or ended:
@@ -385,6 +391,7 @@ class AgentRun:
             if not self._held:
                 await self.ctx.typing(self.agent.key, True)
                 self._typing = True
+            carried = []  # steers of a call that is written again at deep effort
             while True:
                 # Steers received between calls must affect the *next* call.
                 async with self.ctx.lock:
@@ -401,10 +408,12 @@ class AgentRun:
                         state.steps.extend({"agent": self.agent.key, "message_id": own_id,
                                             "kind": kind, "data": data}
                                            for kind, data in self._pending_steps)
+                    steers = [mid for mid in pending or carried if mid in by_id]
                     built = build_context(self.agent, state, purpose="speak", own_message_id=own_id,
-                                          steer=[by_id[mid] for mid in pending] or None,
+                                          steer=[by_id[mid] for mid in steers] or None,
                                           directive=self.directive)
                     profile = "steer" if pending else self.effort
+                    carried = []
                     if profile == "steer":
                         # The continuation follows the text the reader already saw.
                         self._seam_visible = self._visible(by_id)
@@ -433,6 +442,17 @@ class AgentRun:
                 if calls:
                     pending = await self._tools(calls, over_budget=steps >= budget)
                     steps += 1
+                    self._after_tool = True
+                    continue
+                if self._wanted_tools and not budget and not self._escalated:
+                    # The model answered by trying to use a tool this effort does not offer (e.g. "improve
+                    # the file you wrote"). Its markup was dropped, so it would end empty-handed: the same
+                    # message is written again once at deep effort, which has the tools, keeping the steer
+                    # it was answering. What was already shown stays; the rest starts a new paragraph.
+                    # (The message keeps the effort it started with.)
+                    self._escalated = True
+                    self.effort = "deep"
+                    carried = steers
                     self._after_tool = True
                     continue
                 async with self.ctx.lock:

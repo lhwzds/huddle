@@ -41,6 +41,7 @@ class Done:
     finish_reason: str
     usage: Usage | None = None
     reasoning: str = ""  # the call's reasoning text, when the provider returns it
+    wanted_tools: bool = False  # the model tried to call a tool it was not given (its markup was dropped)
 
 class LLM(Protocol):
     def stream(self, messages: list[ChatMessage], *, profile: str, max_tokens: int, tools: list[ToolSpec] | None = None) -> AsyncIterator[TextDelta | ToolCallDone | Done]: ...
