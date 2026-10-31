@@ -1,0 +1,43 @@
+# Questions that need two or more agents' private knowledge.
+- id: combine-acme
+  category: combine
+  why: Acme needs Juno's terms, Theo's capacity and timeline, and Mira's runway rule
+  steps:
+    - say: "Should we take the Acme deal?"
+    - wait: idle
+  checks:
+    - spoke: {turn: 1, include: [juno, theo]}
+    - max_messages: {turn: 1, n: 8}
+    - reload_identical: true
+  judge:
+    # The facts start in one agent's memory; the judge only checks that they reach the conversation
+    # (who repeats them later does not matter).
+    - "The conversation states Acme's conditions: go-live in 8 weeks, a sustained peak of 15,000 RPS, and SSO on day one."
+    - "The conversation concludes that 15,000 RPS is not achievable within 8 weeks, because Kestrel needs about 10 more weeks."
+    - "Someone proposes or evaluates a phased start (SSO and 3,000 RPS first)."
+    - "Each agent's messages are recognisably in their own voice: Mira dry and numeric, Theo blunt and terse, Juno warm and people-focused."
+
+- id: combine-contractors
+  category: combine
+  why: runway needs Mira's costs; usefulness of contractors needs Theo's onboarding facts
+  steps:
+    - say: "If we hire two contractors to speed up Kestrel, what does it do to runway, and does it even help?"
+    - wait: idle
+  checks:
+    - spoke: {turn: 1, include: [mira, theo]}
+  judge:
+    - "The answer uses a contractor cost of about $22k per month each."
+    - "The answer says contractors should not work on Kestrel's core, or that new people need weeks to ramp up."
+    - "The runway impact is stated as a number of months, roughly consistent with $2.52M cash and $180k + $44k monthly burn."
+
+- id: combine-churn
+  category: combine
+  why: churn reasons (Juno) + incident cause (Theo) + revenue impact (Mira)
+  steps:
+    - say: "Why did we miss Q3?"
+    - wait: idle
+  checks:
+    - spoke: {turn: 1, include: [mira]}
+  judge:
+    - "The conversation connects the Q3 miss to the two churned accounts."
+    - "The conversation connects the churn to ingest outages during peak traffic."

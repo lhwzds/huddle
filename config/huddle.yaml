@@ -1,0 +1,96 @@
+# Which model runs the agents. Switch with HUDDLE_MODEL=<key>; no code change.
+model: ${HUDDLE_MODEL:-deepseek}
+
+models:
+  minimax:
+    provider: openai_chat
+    base_url: https://api.minimax.io/v1
+    model: MiniMax-M3.1-Flash
+    api_key_env: MINIMAX_API_KEY
+    include_usage: false
+    params:
+      default: {reasoning_effort: minimal}
+      deep: {reasoning_effort: low}
+  deepseek:
+    provider: openai_chat
+    base_url: https://api.deepseek.com
+    model: deepseek-flash
+    api_key_env: DEEPSEEK_API_KEY
+    include_usage: true
+    reasoning_passback: true   # thinking mode needs reasoning_content back with every tool call
+    params:
+      default: {thinking: {type: disabled}}
+      deep: {thinking: {type: enabled}}
+  openai:
+    provider: openai_chat
+    base_url: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+    model: ${OPENAI_MODEL:-gpt-6.1-terra}
+    api_key_env: OPENAI_API_KEY
+    include_usage: true
+    params:
+      default: {reasoning_effort: low}
+      steer: {reasoning_effort: minimal}
+      decide: {reasoning_effort: minimal}
+  openai-plan:
+    provider: openai_responses
+    base_url: https://api.openai.com/v1
+    model: ${OPENAI_MODEL:-gpt-6.1-terra}
+    api_key_file: ${OPENAI_TOKEN_FILE:-~/.config/huddle/openai-token}
+    params:
+      default: {reasoning: {effort: low}}
+      steer: {reasoning: {effort: none}}
+      decide: {reasoning: {effort: none}}
+      light: {reasoning: {effort: none}}
+      deep: {reasoning: {effort: medium}}
+  fake:
+    provider: fake
+
+# Preset groups in config/groups/<key>/ (group.md + agents/*.md). Each conversation picks one.
+groups: [startup, family, launch]
+default_group: startup
+
+# Every tunable number lives here; the code has no fallbacks for these.
+limits:
+  context_tokens: 24000
+  own_step_messages: 3              # how many of an agent's recent messages keep their tool history in its context
+  max_tokens: {light: 200, normal: 500, deep: 8000, steer: 500, decide: 500, utility: 400}  # deep covers reasoning + whole files
+  max_tool_steps: {light: 0, normal: 0, deep: 8}
+  tool_budget_grace_steps: 2        # past the budget, tools stay offered (calls get "budget used up") for this many steps
+  max_web_calls: 5                  # web_search + fetch_url calls per message
+  # turns and rounds
+  max_agent_rounds: 2
+  max_agent_messages_per_turn: 8
+  big_group_size: 5                 # groups larger than this get a per-turn cap of members + big_group_extra
+  big_group_extra: 2
+  max_discussion_rounds: 4          # free discussion for hard questions or "discuss/debate"
+  max_discussion_messages: 12
+  max_discussion_messages_per_agent: 2
+  conclusion_min_messages: 3        # a discussion this long (from 2+ agents) gets a conclusion
+  dedupe_history_messages: 12       # recent messages the dedupe call sees
+  # time
+  decide_timeout_s: 10
+  extract_timeout_s: 5              # instruction extraction; the next turn waits at most this long for it
+  flush_interval_s: 0.05            # streamed text is written in batches this often
+  sse_ping_s: 15
+  bash_timeout_s: 20
+  sandbox_request_margin_s: 10      # HTTP timeout to the sandbox = command timeout + this
+  # sizes
+  message_chars: 8000
+  tool_result_chars: 6000           # what a tool returns to the model
+  page_result_chars: 4500           # page text inside a fetch_url result
+  page_fetch_chars: 20000           # page text kept (and saved) per fetch
+  # editable fields (the web app reads these through GET /api/config)
+  fields: {agents_per_group: 10, name: 40, role: 80, lens: 80, soul: 6000, memory: 6000,
+           group_name: 60, group_description: 200, group_common: 6000, remember_note: 300}
+
+# Avatar colors for new members, in order.
+palette: ["#c2410c", "#2563eb", "#059669", "#7c3aed", "#db2777", "#0891b2", "#a16207", "#4338ca", "#be123c", "#15803d"]
+
+# Word lists for intents (stop, everyone, file, discuss, hand-off) per language.
+language: ${HUDDLE_LANGUAGE_FILE:-language.yaml}
+
+web:
+  search_url: ${HUDDLE_SEARCH_URL:-https://html.duckduckgo.com/html/}
+
+sandbox_url: ${SANDBOX_URL:-http://sandbox:8100}
+database: ${HUDDLE_DB:-/data/huddle.db}

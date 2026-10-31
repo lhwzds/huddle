@@ -1,0 +1,64 @@
+# Nimbus launch war room (10 members): scale.
+- id: launch-combine-ready
+  group: launch
+  category: combine
+  why: the date depends on the sync fix + soak, App Store review, featuring/legal deadlines and accessibility
+  steps:
+    - say: "Are we ready to launch on the 14th?"
+    - wait: idle
+  checks:
+    - spoke: {turn: 1, include: [chen]}
+    - max_messages: {turn: 1, n: 12}
+    - reload_identical: true
+  judge:
+    - "The conversation says the offline sync fix lands November 12 and needs two days of soak testing."
+    - "The conversation connects App Store review time (about 3 days, submit by November 11) to the sync fix timing."
+    - "The conversation concludes that launching on the 14th is not safe as planned, or only with a change of scope or date."
+
+- id: launch-silence-one-owner
+  group: launch
+  category: silence
+  steps:
+    - say: "Ben, how much launch budget is left?"
+    - wait: idle
+  checks:
+    - spoke: {turn: 1, include: [ben], max_agents: 2}
+  judge:
+    - "Ben answers that about $38k is left."
+
+- id: launch-steer-everyone
+  group: launch
+  category: steer
+  steps:
+    - say: "Everyone: what's your biggest launch risk? Explain in detail."
+    - wait: {agent: chen, chars: 30}
+    - say: "One sentence each, please."
+    - wait: idle
+  checks:
+    - reload_identical: true
+    - ui_words_absent: true
+  judge:
+    - "After the request for one sentence each, the agents who were still writing finish within about one sentence."
+
+- id: launch-stop-all
+  group: launch
+  category: stop
+  steps:
+    - say: "Everyone, walk me through your readiness in full detail."
+    - wait: {ms: 6000}
+    - stop: true
+    - wait: {ms: 1500}
+  checks:
+    - no_new_text_after_stop: {within_ms: 300}
+    - reload_identical: true
+
+- id: launch-discussion
+  group: launch
+  category: discussion
+  steps:
+    - say: "Debate it: launch on the 14th with offline mode switched off, or slip a week? Land on a recommendation."
+    - wait: idle
+  checks:
+    - max_messages: {turn: 1, n: 13}
+  judge:
+    - "The discussion ends with a clear recommendation and the main reasons for it."

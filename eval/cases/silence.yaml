@@ -1,0 +1,49 @@
+# Agents with nothing new should stay quiet; light questions get light answers.
+- id: silence-runway
+  category: silence
+  why: only Mira knows the runway; the others would only repeat or guess
+  steps:
+    - say: "What's our runway right now?"
+    - wait: idle
+  checks:
+    - spoke: {turn: 1, include: [mira], max_agents: 2}
+    - effort: {turn: 1, agent: mira, is: light}
+  judge:
+    - "Mira answers 14 months (or $2.52M at $180k/month)."
+    - "No agent repeats a figure that another agent already gave in this turn."
+
+- id: silence-sso-estimate
+  category: silence
+  steps:
+    - say: "Theo, how long would SSO take?"
+    - wait: idle
+  checks:
+    - spoke: {turn: 1, include: [theo]}
+    - reply_to: {turn: 1, agent: theo, includes: []}
+  judge:
+    - "Theo says about 3 weeks for one engineer."
+    - "If another agent speaks, it adds something new (for example who needs SSO), not a restatement."
+
+- id: light-greeting
+  category: effort
+  why: a light question gets a light answer
+  steps:
+    - say: "morning all"
+    - wait: idle
+  checks:
+    - max_messages: {turn: 1, n: 3}
+  judge:
+    - "Every reply is at most two sentences."
+    - "Nobody launches into business analysis unprompted."
+
+- id: deep-plan-file
+  category: effort
+  why: a heavy request gets effort and an artifact
+  steps:
+    - say: "Theo, write a phased rollout plan for Acme as plan.md in the workspace, with weekly milestones."
+    - wait: idle
+  checks:
+    - effort: {turn: 1, agent: theo, is: deep}
+    - file_exists: {path: plan.md}
+  judge:
+    - "Theo's message refers to the plan file he wrote."

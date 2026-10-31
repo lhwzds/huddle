@@ -1,0 +1,72 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Serve the app under a path (e.g. /huddle/) when a reverse proxy strips that prefix.
+        HUDDLE_BASE_PATH: ${HUDDLE_BASE_PATH:-/}
+    restart: unless-stopped
+    ports:
+      # Only this machine by default. Behind a proxy on another host, set HUDDLE_BIND to an address only
+      # that proxy can reach: anyone who can reach this port directly could choose their own client address.
+      - "${HUDDLE_BIND:-127.0.0.1}:${HUDDLE_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      HUDDLE_MODEL: ${HUDDLE_MODEL:-deepseek}
+      SANDBOX_URL: http://sandbox:8100
+    volumes:
+      - data:/data
+    restart: unless-stopped
+    depends_on:
+      - sandbox
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - default
+      - sandbox_net
+
+  sandbox:
+    build:
+      context: ./sandbox
+    init: true
+    restart: unless-stopped
+    environment:
+      HUDDLE_WORKSPACE_TTL_HOURS: ${HUDDLE_WORKSPACE_TTL_HOURS:-24}
+      HUDDLE_WORKSPACE_MAX_MB: ${HUDDLE_WORKSPACE_MAX_MB:-50}
+    networks:
+      - sandbox_net
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - work:/work
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 1.0
+
+volumes:
+  data:
+  work:
+
+networks:
+  sandbox_net:
+    internal: true

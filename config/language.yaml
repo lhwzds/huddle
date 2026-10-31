@@ -1,0 +1,56 @@
+# Word lists the orchestrator uses to read intent from the person's messages and agents' hand-offs.
+# Patterns are Python regular expressions, matched case-insensitively. Add a language by adding entries.
+# {name} in a pattern stands for one member's name (any form the group uses).
+
+# A message that is only one of these (after removing names and "everyone" words) stops the writers.
+stop_words: [stop, stop it, enough, shut up, 停, 停下, 别说了, 够了]
+
+# Words that address the whole group. Latin phrases keep word boundaries ("guyset" is not "guys");
+# "team" is left out on purpose: "the engineering team" is content, not an address.
+everyone:
+  - '(?<!\w)everyone(?!\w)'
+  - '(?<!\w)everybody(?!\w)'
+  - '(?<!\w)all\s+of\s+you(?!\w)'
+  - '(?<!\w)each\s+of\s+you(?!\w)'
+  - '(?<!\w)you\s+each(?!\w)'
+  - '(?<!\w)both\s+of\s+you(?!\w)'
+  - '(?<!\w)you\s+all(?!\w)'
+  - "(?<!\\w)y['’]all(?!\\w)"
+  - '(?<!\w)guys(?!\w)'
+  - '大家'
+  - '各位'
+  - '你们'
+
+# A request to produce a file: the member who handles it works at deep effort (the level with tools).
+file_request:
+  - '\b(write|create|draft|make|save|export|generate|produce|put)\b[^.?!]{0,60}?\b(files?|docs?|documents?|plans?|reports?|tables?|csv|spreadsheets?|scripts?|memos?|briefs?|notes)\b'
+  - '\.(md|csv|py|html|txt|json)\b'
+  - '生成|写一份|保存|导出|文件|文档'
+
+# The person asks the group to deliberate: free discussion rounds and a conclusion.
+discussion:
+  - '\b(discuss|debate|brainstorm|deliberate|argue it out|hash (it|this) out|think (it|this) through)\b'
+  - '讨论|辩论|商量|头脑风暴'
+
+# The person asks for something to be kept for later conversations. Only then is an agent offered its
+# `remember` tool: an instruction about this conversation ("answer in Chinese from now on") is kept with
+# the conversation and must not change the agent in every other one.
+remember:
+  # Any mention of remembering opens the tool; the tool's own instructions limit what is saved. A recall
+  # question may open it too, which is harmless; blocking a real request would not be.
+  - '\bremember\b'
+  - '\b(keep|bear) (it |that |this )?in mind\b'
+  - "\\b(don't|do not|never) forget\\b"
+  - '\b(make|take) a note\b'
+  - '\bnote (that|down)\b'
+  - '记住|记下|别忘|记一下'
+
+# An agent's message invites {name} to answer next: a question to them in the same sentence...
+question_to: '{name}[^.!?。！？]*[?？]'
+# ...or a hand-off ("that's Theo's call", "ask Mira", "问 Juno").
+handoff:
+  - "{name}['’]s\\s+(call|area|question|side|domain|decision|department)"
+  - '\b(ask|over to|up to|for|defer to|leave (it|that) to)\s+{name}'
+  - '{name}\s+(would know|can tell|should (answer|weigh in|confirm)|owns|has (the|that))'
+  - '(问|交给|请)\s*{name}'
+  - '{name}\s*(来答|来回答|比较清楚)'

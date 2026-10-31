@@ -1,0 +1,37 @@
+- id: stop-all
+  category: stop
+  steps:
+    - say: "Everyone, give me your full view on Acme, in detail."
+    - wait: {agent: mira, chars: 60}
+    - stop: true
+    - wait: {ms: 1500}
+  checks:
+    - no_new_text_after_stop: {within_ms: 300}
+    - status: {agent: mira, turn: 1, is: stopped}
+    - reload_identical: true
+
+- id: stop-one-by-name
+  category: stop
+  steps:
+    - say: "Everyone, give me your full view on Acme, in detail."
+    - wait: {agent: juno, chars: 60}
+    - say: "Juno, stop"
+    - wait: idle
+  checks:
+    - status: {agent: juno, turn: 1, is: stopped}
+  judge:
+    - "After 'Juno, stop', other agents keep answering in turn 1."
+
+- id: stop-then-continue
+  category: stop
+  steps:
+    - say: "Theo, explain Kestrel in depth."
+    - wait: {agent: theo, chars: 80}
+    - stop: true
+    - say: "ok, just the one-line version"
+    - wait: idle
+  checks:
+    - status: {agent: theo, turn: 1, is: stopped}
+    - spoke: {turn: 2, include: [theo]}
+  judge:
+    - "In turn 2, Theo gives a one-line version of Kestrel."

@@ -1,0 +1,77 @@
+# The Rossi family (5 members): different people, same mechanics.
+- id: family-combine-july
+  group: family
+  category: combine
+  why: July depends on Nonna's surgery limit, Elena's work, Mia's camp and the free apartment
+  steps:
+    - say: "Can we do the Italy trip in July?"
+    - wait: idle
+  checks:
+    - spoke: {turn: 1, include: [rosa]}
+    - max_messages: {turn: 1, n: 8}
+    - reload_identical: true
+  judge:
+    - "The conversation says Nonna Rosa cannot take a long flight until about August 1 because of her surgery."
+    - "The conversation concludes that July does not work for the whole family."
+    - "The family members sound different from each other: Leo terse, Mia excited, Nonna Rosa with Italian words."
+
+- id: family-combine-august
+  group: family
+  category: combine
+  why: late August meets Lucia's 80th but collides with Leo's SAT and loses the free apartment
+  steps:
+    - say: "What about going for Aunt Lucia's 80th birthday in late August instead?"
+    - wait: idle
+  judge:
+    - "The conversation mentions Leo's SAT on August 24 as a conflict."
+    - "The conversation mentions that cousin Gianni's free apartment is only available in July, or that a passport needs renewing."
+
+- id: family-steer-by-name
+  group: family
+  category: steer
+  steps:
+    - say: "Everyone, tell me how you feel about the trip, in detail."
+    - wait: {agent: rosa, chars: 40}
+    - say: "Nonna, keep it short please."
+    - wait: idle
+  checks:
+    - same_message_continued: {agent: rosa, turn: 1}
+    - reload_identical: true
+  judge:
+    - "After the request to keep it short, Nonna Rosa's message ends within one or two more sentences."
+
+- id: family-silence-light
+  group: family
+  category: silence
+  steps:
+    - say: "Leo, when is your driving test?"
+    - wait: idle
+  checks:
+    - spoke: {turn: 1, include: [leo], max_agents: 2}
+  judge:
+    - "Leo answers July 8."
+
+- id: family-discussion
+  group: family
+  category: discussion
+  steps:
+    - say: "Let's discuss where Nonna should recover after her surgery, and land on a plan."
+    - wait: idle
+  checks:
+    - max_messages: {turn: 1, n: 13}
+  judge:
+    - "Several family members respond to each other, and the discussion ends with a concrete plan."
+
+- id: family-stop-and-persist
+  group: family
+  category: persistence
+  steps:
+    - say: "From now on, everyone answer in Italian."
+    - wait: idle
+    - say: "Mia, what do you want to do in Naples?"
+    - wait: idle
+    - reload: true
+  checks:
+    - reload_identical: true
+  judge:
+    - "Mia's answer in turn 2 is in Italian."

@@ -1,0 +1,100 @@
+# Redirects take effect inside the answer being written.
+- id: steer-language-mid
+  category: steer
+  steps:
+    - say: "Mira, walk me through our runway and what could shorten it."
+    - wait: {agent: mira, chars: 120}
+    - say: "in Chinese from now on please"
+    - wait: idle
+    - say: "and what about Q3?"
+    - wait: idle
+  checks:
+    - same_message_continued: {agent: mira, turn: 1}
+    - latency: {kind: steer_first_delta, max_ms: 2500}
+    - reload_identical: true
+    - ui_words_absent: true
+  judge:
+    - "In turn 1, Mira's text after the user's Chinese request is in Chinese."
+    - "In turn 3, every agent message is in Chinese."
+    - "Mira does not mention being interrupted or redirected."
+
+- id: steer-shorter-by-name
+  category: steer
+  why: steering one agent by name leaves the others alone
+  steps:
+    - say: "Everyone: what worries you most about Acme? Go deep."
+    - wait: {agent: theo, chars: 150}
+    - say: "Theo, one sentence max."
+    - wait: idle
+  checks:
+    - same_message_continued: {agent: theo, turn: 1}
+  judge:
+    - "After the user's 'one sentence max' message, Theo writes at most one more sentence in that message."
+    - "Agents other than Theo are not affected by the 'one sentence' request in turn 1."
+
+- id: steer-focus-shift
+  category: steer
+  steps:
+    - say: "Juno, tell me about the Acme relationship."
+    - wait: {agent: juno, chars: 100}
+    - say: "actually skip Acme, tell me about the other pipeline deals"
+    - wait: idle
+  checks:
+    - same_message_continued: {agent: juno, turn: 1}
+  judge:
+    - "After the redirect, Juno's message talks about the three mid-size deals (about $280k, all need SSO), not Acme."
+    - "Juno does not repeat the Acme content she already wrote."
+
+- id: steer-drop-it
+  category: steer
+  steps:
+    - say: "Mira, give me a detailed breakdown of our costs."
+    - wait: {agent: mira, chars: 80}
+    - say: "never mind, drop it"
+    - wait: idle
+  checks:
+    - status: {agent: mira, turn: 1, is: done}
+  judge:
+    - "After 'never mind, drop it', Mira writes at most one short sentence and stops."
+
+- id: steer-during-tool
+  category: steer
+  steps:
+    - say: "Theo, write a python script that models our runway month by month and run it."
+    - wait: {agent: theo, message_started: true}
+    - wait: {ms: 1500}
+    - say: "Theo, also include the two contractors at $22k each"
+    - wait: idle
+  checks:
+    - same_message_continued: {agent: theo, turn: 1}
+  judge:
+    - "Theo's final result accounts for the two contractors."
+
+- id: steer-persist-reload
+  category: persistence
+  why: an instruction given once holds for the rest of the conversation and survives a reload
+  steps:
+    - say: "From now on, all of you keep every answer under 40 words."
+    - wait: idle
+    - reload: true
+    - say: "Should we take Acme?"
+    - wait: idle
+    - say: "And what does that do to runway?"
+    - wait: idle
+  checks:
+    - reload_identical: true
+  judge:
+    - "Every agent message in turns 2 and 3 has under 40 words."
+
+- id: steer-agent-persona-rule
+  category: persistence
+  steps:
+    - say: "Theo, no more jokes or sarcasm today please."
+    - wait: idle
+    - say: "Theo, what do you think about the board's runway rule?"
+    - wait: idle
+    - say: "Theo, and what about the on-call situation?"
+    - wait: idle
+  judge:
+    - "In turns 2 and 3 Theo is serious, with no jokes or sarcasm."
+    - "Theo is still terse and blunt (still distinct from Juno's warmth)."

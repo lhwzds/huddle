@@ -1,0 +1,22 @@
+- id: exchange-ends
+  category: exchange
+  why: agents can address each other, and the exchange ends on its own
+  steps:
+    - say: "Juno, ask Theo and Mira whatever you need to know before you answer Priya today."
+    - wait: idle
+  checks:
+    - max_messages: {turn: 1, n: 8}
+    - spoke: {turn: 1, include: [juno, theo]}
+  judge:
+    - "Juno asks Theo and/or Mira a question by name and they answer it."
+    - "The exchange ends without agents thanking or agreeing with each other in loops."
+
+- id: exchange-interrupt
+  category: exchange
+  steps:
+    - say: "Theo and Mira, debate whether to finish Kestrel before taking Acme."
+    - wait: {agent: mira, chars: 80}
+    - say: "Mira, assume the board approves going below 12 months"
+    - wait: idle
+  judge:
+    - "Mira's reasoning after the user's assumption treats the board rule as waived."

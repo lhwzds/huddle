@@ -1,0 +1,8 @@
+node_modules
+.venv
+dist
+*.db
+.env
+openai-token
+*.token
+.git
