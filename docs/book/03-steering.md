@@ -8,7 +8,7 @@ title: Steering mid-answer
 
 A steer is a user message that arrives while an agent is writing. Huddle does not stop the agent and start a new reply: the same message continues from exactly what the reader has seen, with the request applied. The loop is Huddle's own (no agent framework), because it has to race a model stream against an inbox and keep the event log consistent. The [architecture overview](../architecture.md) has the sequence diagram.
 
-<sub>Sources: [agent.py:64-93](../../backend/huddle/agent.py#L64-L93) · [AGENTS.md:5-6](../../AGENTS.md#L5-L6) · [CONTRIBUTING.md:3-4](../../CONTRIBUTING.md#L3-L4)</sub>
+<sub>Sources: [agent.py:65-97](../../backend/huddle/agent.py#L65-L97) · [AGENTS.md:5-6](../../AGENTS.md#L5-L6) · [CONTRIBUTING.md:3-4](../../CONTRIBUTING.md#L3-L4)</sub>
 
 ## The run loop
 
@@ -16,18 +16,19 @@ A steer is a user message that arrives while an agent is writing. Huddle does no
 
 - steers arrived → loop again at once (a continuation);
 - held → wait for release or a steer;
-- tool calls → run them, then loop;
+- tool calls → run them, then loop (the tool budget is on [Groups, memory and tools](04-groups-and-tools.md));
+- no tools offered, but the model tried one (`_wanted_tools`) → once, write the same message again at `deep` effort, keeping its steer;
 - otherwise → under the lock, drain the inbox once more and only if it is empty mark the message `done`.
 
-`finished` is set before that lock is released, and `steer()` refuses a finished run. A steer is therefore either taken by this run or refused and handled as a new reply; it is never lost between the two.
+`finished` is set before that lock is released, and `steer()` refuses a finished run. A steer is therefore either taken by this run or refused and handled as a new reply; it is never lost between the two. `_text` drops blank lines at the start of a message, so an empty reply leaves no empty message.
 
-<sub>Sources: [agent.py:378-415](../../backend/huddle/agent.py#L378-L415) · [agent.py:426-446](../../backend/huddle/agent.py#L426-L446) · [agent.py:128-132](../../backend/huddle/agent.py#L128-L132)</sub>
+<sub>Sources: [agent.py:384-424](../../backend/huddle/agent.py#L384-L424) · [agent.py:435-466](../../backend/huddle/agent.py#L435-L466) · [agent.py:177-180](../../backend/huddle/agent.py#L177-L180) · [agent.py:130-134](../../backend/huddle/agent.py#L130-L134)</sub>
 
 ## Racing the stream against the inbox
 
 `_stream` keeps two tasks alive: the next model event and `inbox.get()`. Text is buffered and flushed as `message.delta` in small time-based batches (`flush_interval_s`). When a steer wins the race, a delta that already arrived is still consumed and flushed, never dropped, and the `finally` block closes the generator, which closes the provider's HTTP stream. The reader keeps exactly what was published, and the next call starts from it.
 
-<sub>Sources: [agent.py:201-264](../../backend/huddle/agent.py#L201-L264)</sub>
+<sub>Sources: [agent.py:206-270](../../backend/huddle/agent.py#L206-L270)</sub>
 
 ## Continuing the same message
 
@@ -35,13 +36,13 @@ For a continuation, `build_context` moves the agent's own partial message to the
 
 New text joins the old with `seam`: "… " when the cut fell mid-word, a space after punctuation. A leading ellipsis from the model is stripped so the seam never doubles. Everything goes to the same message id, so the chat shows one message that changes direction.
 
-<sub>Sources: [context.py:97-106](../../backend/huddle/context.py#L97-L106) · [prompts.py:22-35](../../backend/huddle/prompts.py#L22-L35) · [prompts.py:164-182](../../backend/huddle/prompts.py#L164-L182) · [agent.py:175-187](../../backend/huddle/agent.py#L175-L187)</sub>
+<sub>Sources: [context.py:97-106](../../backend/huddle/context.py#L97-L106) · [prompts.py:22-35](../../backend/huddle/prompts.py#L22-L35) · [prompts.py:164-182](../../backend/huddle/prompts.py#L164-L182) · [agent.py:181-189](../../backend/huddle/agent.py#L181-L189)</sub>
 
 ## Steers during tool work
 
 Between model calls a steer simply lands in the next call. While a command runs, `_tools` races the tool task against the inbox; a steer kills the workspace's commands through `sandbox.kill` and answers the call with an "interrupted" result, as it does for any remaining calls in the batch. A held run waiting for dedupe also listens to its inbox, so a steer is not lost while the run is invisible.
 
-<sub>Sources: [agent.py:312-376](../../backend/huddle/agent.py#L312-L376) · [agent.py:112-126](../../backend/huddle/agent.py#L112-L126)</sub>
+<sub>Sources: [agent.py:318-382](../../backend/huddle/agent.py#L318-L382) · [agent.py:114-128](../../backend/huddle/agent.py#L114-L128)</sub>
 
 ## Who is steered
 
@@ -53,7 +54,7 @@ A message that names agents steers only those runs; the others keep writing unto
 
 A message that is only a stop phrase (optionally with names; the phrases are in `config/language.yaml`), or the Stop button, ends work instead of steering. Under the lock `_stop_locked` cancels the targeted runs and every instruction extraction, marks their streaming messages `stopped` and clears typing; the cancelled tasks are awaited only after the lock is released, so a newer turn's output is never swept up. A cancelled run discards its unflushed buffer: a stop adds no text. An unnamed follow-up right after a stop ("ok, the short version") is addressed to the stopped agent.
 
-<sub>Sources: [orchestrator.py:502-550](../../backend/huddle/orchestrator.py#L502-L550) · [orchestrator.py:330-340](../../backend/huddle/orchestrator.py#L330-L340) · [agent.py:447-451](../../backend/huddle/agent.py#L447-L451) · [language.yaml:5-6](../../config/language.yaml#L5-L6)</sub>
+<sub>Sources: [orchestrator.py:502-550](../../backend/huddle/orchestrator.py#L502-L550) · [orchestrator.py:330-340](../../backend/huddle/orchestrator.py#L330-L340) · [agent.py:467-471](../../backend/huddle/agent.py#L467-L471) · [language.yaml:5-6](../../config/language.yaml#L5-L6)</sub>
 
 ## Standing instructions
 

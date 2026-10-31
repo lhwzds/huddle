@@ -28,7 +28,7 @@ The app edits members through `/api/groups/{group}/agents` and the group's share
 
 `remember` appends one short note to the agent's own memory under `## Remembered`. Memory is shared by every conversation of the group, so the tool is offered, once per message, only when the person's message (or a steer that reaches the run) mentions remembering: the `remember` patterns in `config/language.yaml` set `RunContext.can_remember`. Execution checks again: a `remember` call without it, or a call for any tool that was not offered, is answered with an error and never run. Notes are capped at `remember_note` characters; a full memory refuses a note instead of truncating older facts.
 
-<sub>Sources: [agents.py:220-237](../../backend/huddle/agents.py#L220-L237) · [agent.py:301-310](../../backend/huddle/agent.py#L301-L310) · [agent.py:422-425](../../backend/huddle/agent.py#L422-L425) · [agent.py:326-329](../../backend/huddle/agent.py#L326-L329) · [orchestrator.py:433-435](../../backend/huddle/orchestrator.py#L433-L435) · +2</sub>
+<sub>Sources: [agents.py:220-237](../../backend/huddle/agents.py#L220-L237) · [agent.py:307-316](../../backend/huddle/agent.py#L307-L316) · [agent.py:431-434](../../backend/huddle/agent.py#L431-L434) · [agent.py:332-335](../../backend/huddle/agent.py#L332-L335) · [orchestrator.py:433-435](../../backend/huddle/orchestrator.py#L433-L435) · +2</sub>
 
 ## Free discussion
 
@@ -48,7 +48,7 @@ Questions like "should we take the deal?" need facts that sit in different memor
 
 Effort sets a message's length guidance, token cap and tool budget; only `deep` has a sandbox tool budget (`max_tool_steps`). Once a run has used tools it keeps being offered them for `tool_budget_grace_steps` more steps, but those calls return "budget used up": withdrawing tools mid-run made some models write raw tool markup as text. After the grace steps the tools are withdrawn, which ends a model that keeps calling. Web calls have their own cap per message. After each batch the run compares the workspace listing before and after and emits `file.changed`, which refreshes the Files panel.
 
-<sub>Sources: [huddle.yaml:56-59](../../config/huddle.yaml#L56-L59) · [agent.py:416-421](../../backend/huddle/agent.py#L416-L421) · [agent.py:371-376](../../backend/huddle/agent.py#L371-L376) · [prompts.py:6-10](../../backend/huddle/prompts.py#L6-L10)</sub>
+<sub>Sources: [huddle.yaml:56-59](../../config/huddle.yaml#L56-L59) · [agent.py:425-430](../../backend/huddle/agent.py#L425-L430) · [agent.py:377-382](../../backend/huddle/agent.py#L377-L382) · [prompts.py:6-10](../../backend/huddle/prompts.py#L6-L10)</sub>
 
 ## Web research
 

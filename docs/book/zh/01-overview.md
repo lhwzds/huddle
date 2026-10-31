@@ -8,9 +8,9 @@ title: 概览
 
 Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体都有灵魂（它是谁）和私有记忆；几个智能体同时流式作答，彼此对话，只会重复别人时保持沉默，还能在写作途中被改变方向，而且仍是同一条消息。
 
-运行时由两个对象承担：每个会话的 `Orchestrator` 决定谁发言（[一轮对话如何运作](02-how-it-works.md)），每条可见消息对应一个 `AgentRun`，负责写出它并吸收引导（[回答途中的引导](03-steering.md)）。[README](../../../README.md) 列出了可以尝试的操作，[架构概览](../../architecture.md) 有图示，[配置](../../configuration.md) 说明每一项设置；代码布局见 [代码结构](structure.md)。Huddle 采用 Apache-2.0 许可；[CONTRIBUTING.md](../../../CONTRIBUTING.md) 说明各类改动应放在哪里。
+运行时由两个对象承担：每个会话的 `Orchestrator` 决定谁发言（[一轮对话如何运作](02-how-it-works.md)），每条可见消息对应一个 `AgentRun`，负责写出它并吸收引导（[回答途中的引导](03-steering.md)）。[架构概览](../../architecture.md) 有图示和设计决策，[配置](../../configuration.md) 说明每一项设置，[SECURITY.md](../../../SECURITY.md) 说明沙箱防护什么；代码布局见 [代码结构](structure.md)。Huddle 采用 Apache-2.0 许可；[CONTRIBUTING.md](../../../CONTRIBUTING.md) 说明各类改动应放在哪里。
 
-<sub>来源: [orchestrator.py:30-44](../../../backend/huddle/orchestrator.py#L30-L44) · [agent.py:64-93](../../../backend/huddle/agent.py#L64-L93) · [LICENSE:1-3](../../../LICENSE#L1-L3)</sub>
+<sub>来源: [orchestrator.py:30-44](../../../backend/huddle/orchestrator.py#L30-L44) · [agent.py:65-97](../../../backend/huddle/agent.py#L65-L97) · [LICENSE:1-3](../../../LICENSE#L1-L3)</sub>
 
 ## 运行
 
@@ -32,7 +32,7 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 ## 提供方差异留在适配器里
 
-运行时只看到一种事件流：`TextDelta`、`ToolCallDone` 和 `Done`。`OpenAIChat` 屏蔽差异：`_ThinkFilter` 去掉 `<think>` 块，`_MarkupFilter` 截掉某些模型以文本形式写出的原生工具调用标记；开启 `reasoning_passback` 后（`deepseek` 已开启），每条助手消息都带上自己的 `reasoning_content`，思考模型一旦涉及工具就要求如此。传输错误、429 和 5xx 只在产出第一个事件之前重试，因此重试绝不会重复可见文本。
+运行时只看到一种事件流：`TextDelta`、`ToolCallDone` 和 `Done`。`OpenAIChat` 屏蔽差异：`_ThinkFilter` 去掉 `<think>` 块，`_MarkupFilter` 截掉某些模型以文本形式写出的原生工具调用标记（并在 `Done` 上以 `wanted_tools` 报告这次截断，见 [回答途中的引导](03-steering.md)）；开启 `reasoning_passback` 后（`deepseek` 已开启），每条助手消息都带上自己的 `reasoning_content`，思考模型一旦涉及工具就要求如此。传输错误、429 和 5xx 只在产出第一个事件之前重试，因此重试绝不会重复可见文本。
 
 <sub>来源: [openai_chat.py:15-41](../../../backend/huddle/llm/openai_chat.py#L15-L41) · [openai_chat.py:61-88](../../../backend/huddle/llm/openai_chat.py#L61-L88) · [openai_chat.py:101-186](../../../backend/huddle/llm/openai_chat.py#L101-L186) · [huddle.yaml:14-23](../../../config/huddle.yaml#L14-L23)</sub>
 

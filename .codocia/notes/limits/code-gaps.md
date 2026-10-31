@@ -2,7 +2,7 @@
 title: Gaps visible in the code
 order: 10
 evidence:
-  - backend/huddle/agent.py:273-293 #63e5fbc3450e
+  - backend/huddle/agent.py:279-299 #63e5fbc3450e
   - backend/huddle/orchestrator.py:218-242 #354f32921143
   - backend/huddle/orchestrator.py:280-299 #8d3e8cd81d91
   - backend/huddle/store.py:103-111 #8d2d58442fcc

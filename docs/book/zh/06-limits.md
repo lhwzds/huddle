@@ -6,9 +6,16 @@ title: 限制与已知缺口
 
 <sub>[English](../06-limits.md) · **中文**</sub>
 
-Huddle 的范围取舍是有意的：单进程、单用户、无账户，正在进行的回答保存在内存中（重启会把它们标记为已停止），所有会话共用一个按工作区目录隔离的沙箱容器，群组由同一实例的所有使用者共享。[README](../../../README.md#scope-cuts-and-known-gaps) 列出了它实测到的已知缺口，[SECURITY.md](../../../SECURITY.md) 列出了安全方面的限制。下面补充从此提交的代码中可以看出的缺口。
+Huddle 的范围取舍是有意的，在代码中可以看到：
 
-<sub>来源: [orchestrator.py:35-36](../../../backend/huddle/orchestrator.py#L35-L36) · [main.py:64-66](../../../backend/huddle/main.py#L64-L66)</sub>
+- **单进程。** 每个 `Orchestrator` 把它的会话及正在进行的回答保存在内存中；启动时 `stop_streaming_on_startup` 把仍处于 `streaming` 的消息全部标记为 `stopped`，所以重启会结束正在进行的回答。
+- **单用户，无账户。** `has_access` 只核对一个邀请码（或者不设）；通过的人能看到所有会话。
+- **一个沙箱容器。** 每个会话在同一根目录下有自己的工作区目录，但命令以同一个用户运行，所以目录只是分隔，不是安全边界。
+- **共享群组。** `AgentRegistry` 为每个实例只保存一套群组；编辑对所有人生效。
+
+[SECURITY.md](../../../SECURITY.md) 列出了安全方面的限制。下面补充从此提交的代码中可以看出的缺口。
+
+<sub>来源: [orchestrator.py:35-37](../../../backend/huddle/orchestrator.py#L35-L37) · [main.py:64-66](../../../backend/huddle/main.py#L64-L66) · [store.py:362-364](../../../backend/huddle/store.py#L362-L364) · [guards.py:205-210](../../../backend/huddle/guards.py#L205-L210) · [server.py:261-269](../../../sandbox/server.py#L261-L269) · +1</sub>
 
 ## 代码中可见的缺口
 
@@ -19,4 +26,4 @@ Huddle 的范围取舍是有意的：单进程、单用户、无账户，正在�
 - **长对话会遗忘。** 上下文裁剪先丢最旧的对话；受保护的续写内容仍可能超出上限。
 - **DNS 重绑定只对页面读取堵住**：`fetch_url` 只连接刚检查过的地址（[群组、记忆与工具](04-groups-and-tools.md)）；`web_search` 用普通客户端访问固定的搜索地址。
 
-<sub>来源: [agent.py:273-293](../../../backend/huddle/agent.py#L273-L293) · [orchestrator.py:218-242](../../../backend/huddle/orchestrator.py#L218-L242) · [orchestrator.py:280-299](../../../backend/huddle/orchestrator.py#L280-L299) · [store.py:103-111](../../../backend/huddle/store.py#L103-L111) · [context.py:124-132](../../../backend/huddle/context.py#L124-L132) · +2</sub>
+<sub>来源: [agent.py:279-299](../../../backend/huddle/agent.py#L279-L299) · [orchestrator.py:218-242](../../../backend/huddle/orchestrator.py#L218-L242) · [orchestrator.py:280-299](../../../backend/huddle/orchestrator.py#L280-L299) · [store.py:103-111](../../../backend/huddle/store.py#L103-L111) · [context.py:124-132](../../../backend/huddle/context.py#L124-L132) · +2</sub>

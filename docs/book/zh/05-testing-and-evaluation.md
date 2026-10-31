@@ -6,7 +6,7 @@ title: 测试与评估
 
 <sub>[English](../05-testing-and-evaluation.md) · **中文**</sub>
 
-Huddle 有两层检查。单元和集成测试离线运行，使用脚本化模型；评估运行器用真实模型驱动一个正在运行的实例，并为得到的对话打分。两者的命令见 [README](../../../README.md)；测试计划见[测试规范](../../specs/testing.md)，数据集格式见[评估规范](../../specs/eval.md)。
+Huddle 有两层检查。单元和集成测试离线运行，使用脚本化模型；评估运行器用真实模型驱动一个正在运行的实例，并为得到的对话打分。测试命令见 [CONTRIBUTING.md](../../../CONTRIBUTING.md)；测试计划见[测试规范](../../specs/testing.md)，[评估规范](../../specs/eval.md)给出数据集格式和运行器命令。
 
 <sub>来源: [AGENTS.md:5-12](../../../AGENTS.md#L5-L12)</sub>
 
@@ -16,7 +16,7 @@ Huddle 有两层检查。单元和集成测试离线运行，使用脚本化模�
 
 前端测试（Vitest）覆盖事件归约器（包括缺口检测），以及群组、资料和跟随滚动等辅助函数。沙箱测试启动真实服务并运行真实进程。评估测试在小型合成事件日志上运行检查、指标和对话记录标记。CI 在每次推送和拉取请求时运行全部四套测试；[CONTRIBUTING.md](../../../CONTRIBUTING.md) 列出了同样的命令。
 
-<sub>来源: [fake.py:1-45](../../../backend/huddle/llm/fake.py#L1-L45) · [conftest.py:13-38](../../../backend/tests/conftest.py#L13-L38) · [test_runtime.py:277-308](../../../backend/tests/test_runtime.py#L277-L308) · [state.test.ts:44-58](../../../frontend/test/state.test.ts#L44-L58) · [test_server.py:15-30](../../../sandbox/tests/test_server.py#L15-L30) · +2</sub>
+<sub>来源: [fake.py:1-46](../../../backend/huddle/llm/fake.py#L1-L46) · [conftest.py:13-38](../../../backend/tests/conftest.py#L13-L38) · [test_runtime.py:277-308](../../../backend/tests/test_runtime.py#L277-L308) · [state.test.ts:44-58](../../../frontend/test/state.test.ts#L44-L58) · [test_server.py:15-30](../../../sandbox/tests/test_server.py#L15-L30) · +2</sub>
 
 ## 评估数据集
 

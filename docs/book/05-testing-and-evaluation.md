@@ -6,7 +6,7 @@ title: Testing and evaluation
 
 <sub>**English** · [中文](zh/05-testing-and-evaluation.md)</sub>
 
-Two layers check Huddle. Unit and integration tests run offline against a scripted model; the evaluation runner drives a running instance with a real model and scores the conversation it gets back. Commands for both are in the [README](../../README.md); the test plan is in [the testing spec](../specs/testing.md) and the dataset format in [the eval spec](../specs/eval.md).
+Two layers check Huddle. Unit and integration tests run offline against a scripted model; the evaluation runner drives a running instance with a real model and scores the conversation it gets back. The test commands are in [CONTRIBUTING.md](../../CONTRIBUTING.md); the test plan is in [the testing spec](../specs/testing.md), and [the eval spec](../specs/eval.md) has the dataset format and the runner command.
 
 <sub>Sources: [AGENTS.md:5-12](../../AGENTS.md#L5-L12)</sub>
 
@@ -16,7 +16,7 @@ Backend tests never touch the network. `FakeLLM` replies by rules keyed on agent
 
 Frontend tests (Vitest) cover the event reducer, including gap detection, plus group, profile and follow-scroll helpers. Sandbox tests start the real service and run real processes. Eval tests run the checks, metrics and transcript markers on small synthetic event logs. CI runs all four suites on every push and pull request; [CONTRIBUTING.md](../../CONTRIBUTING.md) lists the same commands.
 
-<sub>Sources: [fake.py:1-45](../../backend/huddle/llm/fake.py#L1-L45) · [conftest.py:13-38](../../backend/tests/conftest.py#L13-L38) · [test_runtime.py:277-308](../../backend/tests/test_runtime.py#L277-L308) · [state.test.ts:44-58](../../frontend/test/state.test.ts#L44-L58) · [test_server.py:15-30](../../sandbox/tests/test_server.py#L15-L30) · +2</sub>
+<sub>Sources: [fake.py:1-46](../../backend/huddle/llm/fake.py#L1-L46) · [conftest.py:13-38](../../backend/tests/conftest.py#L13-L38) · [test_runtime.py:277-308](../../backend/tests/test_runtime.py#L277-L308) · [state.test.ts:44-58](../../frontend/test/state.test.ts#L44-L58) · [test_server.py:15-30](../../sandbox/tests/test_server.py#L15-L30) · +2</sub>
 
 ## The evaluation dataset
 

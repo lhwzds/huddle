@@ -6,7 +6,7 @@ evidence:
   - backend/huddle/orchestrator.py:385-403 #912a84077ceb
   - backend/huddle/orchestrator.py:414-425 #09c87e96e2bb
   - backend/huddle/prompts.py:105-130 #b1f1d93ffac8
-  - backend/huddle/llm/base.py:48-97 #47ca1ec1dfd1
+  - backend/huddle/llm/base.py:49-98 #47ca1ec1dfd1
 ---
 
 Each round, every candidate makes a small `decide` call from its *own* context (so private memory shapes the decision) and returns JSON: `speak`, `effort`, `addresses` and a short `point`. The prompt makes silence the default: speak only with a new fact, number, risk or proposal. `complete_json` tolerates prose around the JSON and repairs a cut-off object; a failed or malformed decision falls back to "speak only if addressed".

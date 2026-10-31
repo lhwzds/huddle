@@ -3,8 +3,8 @@ title: Effort decides tool access
 order: 60
 evidence:
   - config/huddle.yaml:56-59 #cdc2f78cb555
-  - backend/huddle/agent.py:416-421 #1db2d44aeef2
-  - backend/huddle/agent.py:371-376 #5fb6b41e6b04
+  - backend/huddle/agent.py:425-430 #1db2d44aeef2
+  - backend/huddle/agent.py:377-382 #5fb6b41e6b04
   - backend/huddle/prompts.py:6-10 #3c51f6f2f235
 ---
 

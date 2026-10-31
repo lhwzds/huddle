@@ -6,7 +6,7 @@ title: Huddle — 全书单页
 
 <sub>[English](../all.md) · **中文**</sub>
 
-本书面向评估 Huddle 的读者：它做什么，一条消息如何流经运行时，回答途中的引导如何保持一致，以及它的边界在哪里。本书建立在 [README](../../../README.md)、[架构概览](../../architecture.md) 和[规范](../../specs/)之上，不重复其内容。
+本书面向评估 Huddle 的读者：它做什么，一条消息如何流经运行时，回答途中的引导如何保持一致，以及它的边界在哪里。本书建立在[架构概览](../../architecture.md)、[配置](../../configuration.md)、[SECURITY.md](../../../SECURITY.md) 和[规范](../../specs/)之上，不重复其内容。
 
 <a id="overview"></a>
 
@@ -14,9 +14,9 @@ title: Huddle — 全书单页
 
 Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体都有灵魂（它是谁）和私有记忆；几个智能体同时流式作答，彼此对话，只会重复别人时保持沉默，还能在写作途中被改变方向，而且仍是同一条消息。
 
-运行时由两个对象承担：每个会话的 `Orchestrator` 决定谁发言（[一轮对话如何运作](#how-it-works)），每条可见消息对应一个 `AgentRun`，负责写出它并吸收引导（[回答途中的引导](#steering)）。[README](../../../README.md) 列出了可以尝试的操作，[架构概览](../../architecture.md) 有图示，[配置](../../configuration.md) 说明每一项设置；代码布局见 [代码结构](#structure)。Huddle 采用 Apache-2.0 许可；[CONTRIBUTING.md](../../../CONTRIBUTING.md) 说明各类改动应放在哪里。
+运行时由两个对象承担：每个会话的 `Orchestrator` 决定谁发言（[一轮对话如何运作](#how-it-works)），每条可见消息对应一个 `AgentRun`，负责写出它并吸收引导（[回答途中的引导](#steering)）。[架构概览](../../architecture.md) 有图示和设计决策，[配置](../../configuration.md) 说明每一项设置，[SECURITY.md](../../../SECURITY.md) 说明沙箱防护什么；代码布局见 [代码结构](#structure)。Huddle 采用 Apache-2.0 许可；[CONTRIBUTING.md](../../../CONTRIBUTING.md) 说明各类改动应放在哪里。
 
-<sub>来源: [orchestrator.py:30-44](../../../backend/huddle/orchestrator.py#L30-L44) · [agent.py:64-93](../../../backend/huddle/agent.py#L64-L93) · [LICENSE:1-3](../../../LICENSE#L1-L3)</sub>
+<sub>来源: [orchestrator.py:30-44](../../../backend/huddle/orchestrator.py#L30-L44) · [agent.py:65-97](../../../backend/huddle/agent.py#L65-L97) · [LICENSE:1-3](../../../LICENSE#L1-L3)</sub>
 
 ### 运行
 
@@ -38,7 +38,7 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 ### 提供方差异留在适配器里
 
-运行时只看到一种事件流：`TextDelta`、`ToolCallDone` 和 `Done`。`OpenAIChat` 屏蔽差异：`_ThinkFilter` 去掉 `<think>` 块，`_MarkupFilter` 截掉某些模型以文本形式写出的原生工具调用标记；开启 `reasoning_passback` 后（`deepseek` 已开启），每条助手消息都带上自己的 `reasoning_content`，思考模型一旦涉及工具就要求如此。传输错误、429 和 5xx 只在产出第一个事件之前重试，因此重试绝不会重复可见文本。
+运行时只看到一种事件流：`TextDelta`、`ToolCallDone` 和 `Done`。`OpenAIChat` 屏蔽差异：`_ThinkFilter` 去掉 `<think>` 块，`_MarkupFilter` 截掉某些模型以文本形式写出的原生工具调用标记（并在 `Done` 上以 `wanted_tools` 报告这次截断，见 [回答途中的引导](#steering)）；开启 `reasoning_passback` 后（`deepseek` 已开启），每条助手消息都带上自己的 `reasoning_content`，思考模型一旦涉及工具就要求如此。传输错误、429 和 5xx 只在产出第一个事件之前重试，因此重试绝不会重复可见文本。
 
 <sub>来源: [openai_chat.py:15-41](../../../backend/huddle/llm/openai_chat.py#L15-L41) · [openai_chat.py:61-88](../../../backend/huddle/llm/openai_chat.py#L61-L88) · [openai_chat.py:101-186](../../../backend/huddle/llm/openai_chat.py#L101-L186) · [huddle.yaml:14-23](../../../config/huddle.yaml#L14-L23)</sub>
 
@@ -89,7 +89,7 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 随后代码在第 0 回合约束模型的选择：若无人想发言，就选出一位（被点名者、有观点者，或上一个发言者），所以每个新问题都有回复（只引导了正在写的智能体的消息是例外，见 [回答途中的引导](#steering)）；请求文件会把写作者提升到 `deep`；对未点名问题的多个 `light` 回答合并为一个；有些消息会开启自由讨论（[群组、记忆与工具](#groups-and-tools)）。
 
-<sub>来源: [orchestrator.py:249-278](../../../backend/huddle/orchestrator.py#L249-L278) · [orchestrator.py:385-403](../../../backend/huddle/orchestrator.py#L385-L403) · [orchestrator.py:414-425](../../../backend/huddle/orchestrator.py#L414-L425) · [prompts.py:105-130](../../../backend/huddle/prompts.py#L105-L130) · [base.py:48-97](../../../backend/huddle/llm/base.py#L48-L97)</sub>
+<sub>来源: [orchestrator.py:249-278](../../../backend/huddle/orchestrator.py#L249-L278) · [orchestrator.py:385-403](../../../backend/huddle/orchestrator.py#L385-L403) · [orchestrator.py:414-425](../../../backend/huddle/orchestrator.py#L414-L425) · [prompts.py:105-130](../../../backend/huddle/prompts.py#L105-L130) · [base.py:49-98](../../../backend/huddle/llm/base.py#L49-L98)</sub>
 
 ### 并行开始，暂扣输出
 
@@ -97,7 +97,7 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 这样生成与去重重叠进行，繁忙的一轮不会因为保持安静而多付延迟。消息的位置在发布时固定，而不是在智能体开始思考时。
 
-<sub>来源: [orchestrator.py:431-455](../../../backend/huddle/orchestrator.py#L431-L455) · [orchestrator.py:280-323](../../../backend/huddle/orchestrator.py#L280-L323) · [agent.py:97-126](../../../backend/huddle/agent.py#L97-L126) · [agent.py:158-192](../../../backend/huddle/agent.py#L158-L192)</sub>
+<sub>来源: [orchestrator.py:431-455](../../../backend/huddle/orchestrator.py#L431-L455) · [orchestrator.py:280-323](../../../backend/huddle/orchestrator.py#L280-L323) · [agent.py:99-128](../../../backend/huddle/agent.py#L99-L128) · [agent.py:160-197](../../../backend/huddle/agent.py#L160-L197)</sub>
 
 ### 后续回合与一轮的结束
 
@@ -121,7 +121,7 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 引导是在智能体写作期间到达的用户消息。Huddle 不会停下智能体再开始新回复：同一条消息从读者已看到的位置精确续写，并应用新的要求。这个循环是 Huddle 自己的（不用智能体框架），因为它必须让模型流与收件箱赛跑，并保持事件日志一致。[架构概览](../../architecture.md) 有时序图。
 
-<sub>来源: [agent.py:64-93](../../../backend/huddle/agent.py#L64-L93) · [AGENTS.md:5-6](../../../AGENTS.md#L5-L6) · [CONTRIBUTING.md:3-4](../../../CONTRIBUTING.md#L3-L4)</sub>
+<sub>来源: [agent.py:65-97](../../../backend/huddle/agent.py#L65-L97) · [AGENTS.md:5-6](../../../AGENTS.md#L5-L6) · [CONTRIBUTING.md:3-4](../../../CONTRIBUTING.md#L3-L4)</sub>
 
 ### 运行循环
 
@@ -129,18 +129,19 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 - 有引导到达 → 立即再循环（续写）；
 - 处于暂扣 → 等待放行或引导；
-- 有工具调用 → 执行后再循环；
+- 有工具调用 → 执行后再循环（工具预算见 [群组、记忆与工具](#groups-and-tools)）；
+- 没有提供工具，但模型试图调用一个（`_wanted_tools`）→ 以 `deep` 努力等级把同一条消息重写一次，保留它所回应的引导；
 - 否则 → 在锁下再清空一次收件箱，只有为空时才把消息标记为 `done`。
 
-`finished` 在释放这把锁之前设置，而 `steer()` 会拒绝已完成的运行。因此一个引导要么被这次运行接收，要么被拒绝并作为新回复处理；绝不会在两者之间丢失。
+`finished` 在释放这把锁之前设置，而 `steer()` 会拒绝已完成的运行。因此一个引导要么被这次运行接收，要么被拒绝并作为新回复处理；绝不会在两者之间丢失。`_text` 会去掉消息开头的空行，所以空回复不会留下空消息。
 
-<sub>来源: [agent.py:378-415](../../../backend/huddle/agent.py#L378-L415) · [agent.py:426-446](../../../backend/huddle/agent.py#L426-L446) · [agent.py:128-132](../../../backend/huddle/agent.py#L128-L132)</sub>
+<sub>来源: [agent.py:384-424](../../../backend/huddle/agent.py#L384-L424) · [agent.py:435-466](../../../backend/huddle/agent.py#L435-L466) · [agent.py:177-180](../../../backend/huddle/agent.py#L177-L180) · [agent.py:130-134](../../../backend/huddle/agent.py#L130-L134)</sub>
 
 ### 模型流与收件箱赛跑
 
 `_stream` 同时保持两个任务：下一个模型事件和 `inbox.get()`。文本先缓冲，再按时间小批量（`flush_interval_s`）刷新为 `message.delta`。当引导赢得赛跑时，已经到达的增量仍会被消费并刷新，绝不丢弃；`finally` 块关闭生成器，从而关闭提供方的 HTTP 流。读者保留的正是已发布的内容，下一次调用就从这里开始。
 
-<sub>来源: [agent.py:201-264](../../../backend/huddle/agent.py#L201-L264)</sub>
+<sub>来源: [agent.py:206-270](../../../backend/huddle/agent.py#L206-L270)</sub>
 
 ### 续写同一条消息
 
@@ -148,13 +149,13 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 新文本通过 `seam` 与旧文本衔接：断在词中间时用 "… "，标点之后用一个空格。模型开头自带的省略号会被去掉，接缝不会重复。所有内容都写入同一个消息 id，所以聊天里显示的是一条改变了方向的消息。
 
-<sub>来源: [context.py:97-106](../../../backend/huddle/context.py#L97-L106) · [prompts.py:22-35](../../../backend/huddle/prompts.py#L22-L35) · [prompts.py:164-182](../../../backend/huddle/prompts.py#L164-L182) · [agent.py:175-187](../../../backend/huddle/agent.py#L175-L187)</sub>
+<sub>来源: [context.py:97-106](../../../backend/huddle/context.py#L97-L106) · [prompts.py:22-35](../../../backend/huddle/prompts.py#L22-L35) · [prompts.py:164-182](../../../backend/huddle/prompts.py#L164-L182) · [agent.py:181-189](../../../backend/huddle/agent.py#L181-L189)</sub>
 
 ### 工具执行期间的引导
 
 在两次模型调用之间，引导直接进入下一次调用。命令运行时，`_tools` 让工具任务与收件箱赛跑；引导会通过 `sandbox.kill` 杀掉该工作区的命令，并以"interrupted"结果答复这次调用，批次中剩余的调用也一样。等待去重的暂扣运行同样监听收件箱，所以运行尚不可见时引导也不会丢失。
 
-<sub>来源: [agent.py:312-376](../../../backend/huddle/agent.py#L312-L376) · [agent.py:112-126](../../../backend/huddle/agent.py#L112-L126)</sub>
+<sub>来源: [agent.py:318-382](../../../backend/huddle/agent.py#L318-L382) · [agent.py:114-128](../../../backend/huddle/agent.py#L114-L128)</sub>
 
 ### 谁被引导
 
@@ -166,7 +167,7 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 只包含停止短语（可带名字；短语在 `config/language.yaml` 中）的消息，或 Stop 按钮，会结束工作而不是引导。在锁下，`_stop_locked` 取消目标运行和所有指令提取，把它们的流式消息标记为 `stopped` 并清除输入状态；被取消的任务只在释放锁之后才等待，因此不会误收更新一轮的输出。被取消的运行丢弃未刷新的缓冲：停止不会再添加文本。停止后紧接着的未点名后续消息（"ok, the short version"）发给被停止的智能体。
 
-<sub>来源: [orchestrator.py:502-550](../../../backend/huddle/orchestrator.py#L502-L550) · [orchestrator.py:330-340](../../../backend/huddle/orchestrator.py#L330-L340) · [agent.py:447-451](../../../backend/huddle/agent.py#L447-L451) · [language.yaml:5-6](../../../config/language.yaml#L5-L6)</sub>
+<sub>来源: [orchestrator.py:502-550](../../../backend/huddle/orchestrator.py#L502-L550) · [orchestrator.py:330-340](../../../backend/huddle/orchestrator.py#L330-L340) · [agent.py:467-471](../../../backend/huddle/agent.py#L467-L471) · [language.yaml:5-6](../../../config/language.yaml#L5-L6)</sub>
 
 ### 常驻指令
 
@@ -208,7 +209,7 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 `remember` 往智能体自己的记忆里追加一条简短笔记，放在 `## Remembered` 下。记忆由群组的所有会话共享，所以只有当对方的消息（或送达该运行的引导消息）提到"记住"时，才提供这个工具，每条消息一次：`config/language.yaml` 里的 `remember` 模式会设置 `RunContext.can_remember`。执行时还会再检查：没有它的 `remember` 调用，或者调用了未提供的工具，都会以错误作答，绝不执行。笔记长度上限为 `remember_note` 个字符；记忆已满时会拒绝笔记，而不是截掉旧事实。
 
-<sub>来源: [agents.py:220-237](../../../backend/huddle/agents.py#L220-L237) · [agent.py:301-310](../../../backend/huddle/agent.py#L301-L310) · [agent.py:422-425](../../../backend/huddle/agent.py#L422-L425) · [agent.py:326-329](../../../backend/huddle/agent.py#L326-L329) · [orchestrator.py:433-435](../../../backend/huddle/orchestrator.py#L433-L435) · +2</sub>
+<sub>来源: [agents.py:220-237](../../../backend/huddle/agents.py#L220-L237) · [agent.py:307-316](../../../backend/huddle/agent.py#L307-L316) · [agent.py:431-434](../../../backend/huddle/agent.py#L431-L434) · [agent.py:332-335](../../../backend/huddle/agent.py#L332-L335) · [orchestrator.py:433-435](../../../backend/huddle/orchestrator.py#L433-L435) · +2</sub>
 
 ### 自由讨论
 
@@ -228,7 +229,7 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 努力等级决定消息的长度建议、token 上限和工具预算；只有 `deep` 有沙箱工具预算（`max_tool_steps`）。运行一旦用过工具，超出预算后仍会在 `tool_budget_grace_steps` 步内继续提供工具，但这些调用会返回"预算已用完"：中途撤掉工具会让某些模型把原始工具标记写成文本。宽限步数用完后工具被撤下，从而终止不停调用的模型。网页调用另有每条消息的上限。每批工具调用之后，运行比较前后的工作区文件列表并发出 `file.changed`，刷新文件面板。
 
-<sub>来源: [huddle.yaml:56-59](../../../config/huddle.yaml#L56-L59) · [agent.py:416-421](../../../backend/huddle/agent.py#L416-L421) · [agent.py:371-376](../../../backend/huddle/agent.py#L371-L376) · [prompts.py:6-10](../../../backend/huddle/prompts.py#L6-L10)</sub>
+<sub>来源: [huddle.yaml:56-59](../../../config/huddle.yaml#L56-L59) · [agent.py:425-430](../../../backend/huddle/agent.py#L425-L430) · [agent.py:377-382](../../../backend/huddle/agent.py#L377-L382) · [prompts.py:6-10](../../../backend/huddle/prompts.py#L6-L10)</sub>
 
 ### 网络研究
 
@@ -246,7 +247,7 @@ Huddle 是一个网页群聊：一个人和一组 AI 智能体。每个智能体
 
 ## 测试与评估
 
-Huddle 有两层检查。单元和集成测试离线运行，使用脚本化模型；评估运行器用真实模型驱动一个正在运行的实例，并为得到的对话打分。两者的命令见 [README](../../../README.md)；测试计划见[测试规范](../../specs/testing.md)，数据集格式见[评估规范](../../specs/eval.md)。
+Huddle 有两层检查。单元和集成测试离线运行，使用脚本化模型；评估运行器用真实模型驱动一个正在运行的实例，并为得到的对话打分。测试命令见 [CONTRIBUTING.md](../../../CONTRIBUTING.md)；测试计划见[测试规范](../../specs/testing.md)，[评估规范](../../specs/eval.md)给出数据集格式和运行器命令。
 
 <sub>来源: [AGENTS.md:5-12](../../../AGENTS.md#L5-L12)</sub>
 
@@ -256,7 +257,7 @@ Huddle 有两层检查。单元和集成测试离线运行，使用脚本化模�
 
 前端测试（Vitest）覆盖事件归约器（包括缺口检测），以及群组、资料和跟随滚动等辅助函数。沙箱测试启动真实服务并运行真实进程。评估测试在小型合成事件日志上运行检查、指标和对话记录标记。CI 在每次推送和拉取请求时运行全部四套测试；[CONTRIBUTING.md](../../../CONTRIBUTING.md) 列出了同样的命令。
 
-<sub>来源: [fake.py:1-45](../../../backend/huddle/llm/fake.py#L1-L45) · [conftest.py:13-38](../../../backend/tests/conftest.py#L13-L38) · [test_runtime.py:277-308](../../../backend/tests/test_runtime.py#L277-L308) · [state.test.ts:44-58](../../../frontend/test/state.test.ts#L44-L58) · [test_server.py:15-30](../../../sandbox/tests/test_server.py#L15-L30) · +2</sub>
+<sub>来源: [fake.py:1-46](../../../backend/huddle/llm/fake.py#L1-L46) · [conftest.py:13-38](../../../backend/tests/conftest.py#L13-L38) · [test_runtime.py:277-308](../../../backend/tests/test_runtime.py#L277-L308) · [state.test.ts:44-58](../../../frontend/test/state.test.ts#L44-L58) · [test_server.py:15-30](../../../sandbox/tests/test_server.py#L15-L30) · +2</sub>
 
 ### 评估数据集
 
@@ -282,9 +283,16 @@ Huddle 有两层检查。单元和集成测试离线运行，使用脚本化模�
 
 ## 限制与已知缺口
 
-Huddle 的范围取舍是有意的：单进程、单用户、无账户，正在进行的回答保存在内存中（重启会把它们标记为已停止），所有会话共用一个按工作区目录隔离的沙箱容器，群组由同一实例的所有使用者共享。[README](../../../README.md#scope-cuts-and-known-gaps) 列出了它实测到的已知缺口，[SECURITY.md](../../../SECURITY.md) 列出了安全方面的限制。下面补充从此提交的代码中可以看出的缺口。
+Huddle 的范围取舍是有意的，在代码中可以看到：
 
-<sub>来源: [orchestrator.py:35-36](../../../backend/huddle/orchestrator.py#L35-L36) · [main.py:64-66](../../../backend/huddle/main.py#L64-L66)</sub>
+- **单进程。** 每个 `Orchestrator` 把它的会话及正在进行的回答保存在内存中；启动时 `stop_streaming_on_startup` 把仍处于 `streaming` 的消息全部标记为 `stopped`，所以重启会结束正在进行的回答。
+- **单用户，无账户。** `has_access` 只核对一个邀请码（或者不设）；通过的人能看到所有会话。
+- **一个沙箱容器。** 每个会话在同一根目录下有自己的工作区目录，但命令以同一个用户运行，所以目录只是分隔，不是安全边界。
+- **共享群组。** `AgentRegistry` 为每个实例只保存一套群组；编辑对所有人生效。
+
+[SECURITY.md](../../../SECURITY.md) 列出了安全方面的限制。下面补充从此提交的代码中可以看出的缺口。
+
+<sub>来源: [orchestrator.py:35-37](../../../backend/huddle/orchestrator.py#L35-L37) · [main.py:64-66](../../../backend/huddle/main.py#L64-L66) · [store.py:362-364](../../../backend/huddle/store.py#L362-L364) · [guards.py:205-210](../../../backend/huddle/guards.py#L205-L210) · [server.py:261-269](../../../sandbox/server.py#L261-L269) · +1</sub>
 
 ### 代码中可见的缺口
 
@@ -295,7 +303,7 @@ Huddle 的范围取舍是有意的：单进程、单用户、无账户，正在�
 - **长对话会遗忘。** 上下文裁剪先丢最旧的对话；受保护的续写内容仍可能超出上限。
 - **DNS 重绑定只对页面读取堵住**：`fetch_url` 只连接刚检查过的地址（[群组、记忆与工具](#groups-and-tools)）；`web_search` 用普通客户端访问固定的搜索地址。
 
-<sub>来源: [agent.py:273-293](../../../backend/huddle/agent.py#L273-L293) · [orchestrator.py:218-242](../../../backend/huddle/orchestrator.py#L218-L242) · [orchestrator.py:280-299](../../../backend/huddle/orchestrator.py#L280-L299) · [store.py:103-111](../../../backend/huddle/store.py#L103-L111) · [context.py:124-132](../../../backend/huddle/context.py#L124-L132) · +2</sub>
+<sub>来源: [agent.py:279-299](../../../backend/huddle/agent.py#L279-L299) · [orchestrator.py:218-242](../../../backend/huddle/orchestrator.py#L218-L242) · [orchestrator.py:280-299](../../../backend/huddle/orchestrator.py#L280-L299) · [store.py:103-111](../../../backend/huddle/store.py#L103-L111) · [context.py:124-132](../../../backend/huddle/context.py#L124-L132) · +2</sub>
 
 <a id="structure"></a>
 
@@ -303,13 +311,13 @@ Huddle 的范围取舍是有意的：单进程、单用户、无账户，正在�
 
 本页由 Codocia 根据代码自动生成，每次 build 重新计算：功能区划分、各区自带的说明、区之间的 import 依赖，以及讲解各区的页面。
 
-范围内共 145 个文件，17,477 行；已排除 `**/*.lock`、`**/package-lock.json`、`eval/results/**`、`docs/img/**`、`**/*.png`、`frontend/dist/**`、`frontend/src/styles.css`、`frontend/.prettierrc`、`frontend/.gitignore`、`frontend/.dockerignore`、`.gitignore`、`.dockerignore`
+范围内共 145 个文件，17,415 行；已排除 `**/*.lock`、`**/package-lock.json`、`eval/results/**`、`docs/img/**`、`**/*.png`、`frontend/dist/**`、`frontend/src/styles.css`、`frontend/.prettierrc`、`frontend/.gitignore`、`frontend/.dockerignore`、`.gitignore`、`.dockerignore`
 
 ### 文件结构
 
 **仓库根目录**
 
-- （根目录文件） — 606 行，7 个文件。Think a question through with a group of AI agents.\
+- （根目录文件） — 476 行，7 个文件。Think a question through with a group of AI agents.\
   讲解：[概览](#overview) (2), [回答途中的引导](#steering) (1), [群组、记忆与工具](#groups-and-tools) (2), [测试与评估](#testing-and-evaluation) (1)
 - `.github/` — 47 行，1 个文件\
   讲解：[测试与评估](#testing-and-evaluation) (1)
@@ -323,15 +331,15 @@ Huddle 的范围取舍是有意的：单进程、单用户、无账户，正在�
 
 - （直接文件） — 34 行，2 个文件\
   讲解：未讲解
-- `tests/` — 3,857 行，14 个文件\
+- `tests/` — 3,902 行，14 个文件\
   讲解：[测试与评估](#testing-and-evaluation) (1)
 
 **`backend/huddle/`**
 
-- （直接文件） — 3,677 行，17 个文件。Huddle backend.\
+- （直接文件） — 3,697 行，17 个文件。Huddle backend.\
   核心文件：`config.py` `tools.py` `store.py`\
   讲解：[概览](#overview) (4), [一轮对话如何运作](#how-it-works) (8), [回答途中的引导](#steering) (9), [群组、记忆与工具](#groups-and-tools) (8), [限制与已知缺口](#limits) (2)
-- `llm/` — 598 行，5 个文件\
+- `llm/` — 601 行，5 个文件\
   核心文件：`__init__.py` `fake.py` `base.py`\
   讲解：[概览](#overview) (2), [一轮对话如何运作](#how-it-works) (1), [测试与评估](#testing-and-evaluation) (1)
 
@@ -376,7 +384,7 @@ Huddle 的范围取舍是有意的：单进程、单用户、无账户，正在�
 
 - （直接文件） — 892 行，3 个文件。A standard-library HTTP service that runs agent shell commands and manages per-conversatio…\
   核心文件：`server.py`\
-  讲解：[群组、记忆与工具](#groups-and-tools) (1)
+  讲解：[群组、记忆与工具](#groups-and-tools) (1), [限制与已知缺口](#limits) (1)
 - `tests/` — 408 行，2 个文件\
   讲解：[测试与评估](#testing-and-evaluation) (1)
 

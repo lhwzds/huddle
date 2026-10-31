@@ -28,7 +28,7 @@ title: 群组、记忆与工具
 
 `remember` 往智能体自己的记忆里追加一条简短笔记，放在 `## Remembered` 下。记忆由群组的所有会话共享，所以只有当对方的消息（或送达该运行的引导消息）提到"记住"时，才提供这个工具，每条消息一次：`config/language.yaml` 里的 `remember` 模式会设置 `RunContext.can_remember`。执行时还会再检查：没有它的 `remember` 调用，或者调用了未提供的工具，都会以错误作答，绝不执行。笔记长度上限为 `remember_note` 个字符；记忆已满时会拒绝笔记，而不是截掉旧事实。
 
-<sub>来源: [agents.py:220-237](../../../backend/huddle/agents.py#L220-L237) · [agent.py:301-310](../../../backend/huddle/agent.py#L301-L310) · [agent.py:422-425](../../../backend/huddle/agent.py#L422-L425) · [agent.py:326-329](../../../backend/huddle/agent.py#L326-L329) · [orchestrator.py:433-435](../../../backend/huddle/orchestrator.py#L433-L435) · +2</sub>
+<sub>来源: [agents.py:220-237](../../../backend/huddle/agents.py#L220-L237) · [agent.py:307-316](../../../backend/huddle/agent.py#L307-L316) · [agent.py:431-434](../../../backend/huddle/agent.py#L431-L434) · [agent.py:332-335](../../../backend/huddle/agent.py#L332-L335) · [orchestrator.py:433-435](../../../backend/huddle/orchestrator.py#L433-L435) · +2</sub>
 
 ## 自由讨论
 
@@ -48,7 +48,7 @@ title: 群组、记忆与工具
 
 努力等级决定消息的长度建议、token 上限和工具预算；只有 `deep` 有沙箱工具预算（`max_tool_steps`）。运行一旦用过工具，超出预算后仍会在 `tool_budget_grace_steps` 步内继续提供工具，但这些调用会返回"预算已用完"：中途撤掉工具会让某些模型把原始工具标记写成文本。宽限步数用完后工具被撤下，从而终止不停调用的模型。网页调用另有每条消息的上限。每批工具调用之后，运行比较前后的工作区文件列表并发出 `file.changed`，刷新文件面板。
 
-<sub>来源: [huddle.yaml:56-59](../../../config/huddle.yaml#L56-L59) · [agent.py:416-421](../../../backend/huddle/agent.py#L416-L421) · [agent.py:371-376](../../../backend/huddle/agent.py#L371-L376) · [prompts.py:6-10](../../../backend/huddle/prompts.py#L6-L10)</sub>
+<sub>来源: [huddle.yaml:56-59](../../../config/huddle.yaml#L56-L59) · [agent.py:425-430](../../../backend/huddle/agent.py#L425-L430) · [agent.py:377-382](../../../backend/huddle/agent.py#L377-L382) · [prompts.py:6-10](../../../backend/huddle/prompts.py#L6-L10)</sub>
 
 ## 网络研究
 

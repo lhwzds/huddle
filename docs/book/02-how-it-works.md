@@ -43,7 +43,7 @@ Each round, every candidate makes a small `decide` call from its *own* context (
 
 Code then bounds the model's choices in round 0: if nobody wants to speak, one agent is chosen (the addressed one, one with a point, or whoever spoke last), so every new question gets a reply (a message that only steered writers is the exception, see [Steering mid-answer](03-steering.md)); a request for a file raises the writer to `deep`; several `light` answers to an unaddressed question collapse to one; and some messages open a free discussion ([Groups, memory and tools](04-groups-and-tools.md)).
 
-<sub>Sources: [orchestrator.py:249-278](../../backend/huddle/orchestrator.py#L249-L278) · [orchestrator.py:385-403](../../backend/huddle/orchestrator.py#L385-L403) · [orchestrator.py:414-425](../../backend/huddle/orchestrator.py#L414-L425) · [prompts.py:105-130](../../backend/huddle/prompts.py#L105-L130) · [base.py:48-97](../../backend/huddle/llm/base.py#L48-L97)</sub>
+<sub>Sources: [orchestrator.py:249-278](../../backend/huddle/orchestrator.py#L249-L278) · [orchestrator.py:385-403](../../backend/huddle/orchestrator.py#L385-L403) · [orchestrator.py:414-425](../../backend/huddle/orchestrator.py#L414-L425) · [prompts.py:105-130](../../backend/huddle/prompts.py#L105-L130) · [base.py:49-98](../../backend/huddle/llm/base.py#L49-L98)</sub>
 
 ## Parallel start, held output
 
@@ -51,7 +51,7 @@ When two or more agents want to speak, their runs start immediately but *held*: 
 
 This overlaps generation with deduplication, so a busy turn pays no extra latency for staying quiet. A message's position is fixed when it is published, not when the agent started thinking.
 
-<sub>Sources: [orchestrator.py:431-455](../../backend/huddle/orchestrator.py#L431-L455) · [orchestrator.py:280-323](../../backend/huddle/orchestrator.py#L280-L323) · [agent.py:97-126](../../backend/huddle/agent.py#L97-L126) · [agent.py:158-192](../../backend/huddle/agent.py#L158-L192)</sub>
+<sub>Sources: [orchestrator.py:431-455](../../backend/huddle/orchestrator.py#L431-L455) · [orchestrator.py:280-323](../../backend/huddle/orchestrator.py#L280-L323) · [agent.py:99-128](../../backend/huddle/agent.py#L99-L128) · [agent.py:160-197](../../backend/huddle/agent.py#L160-L197)</sub>
 
 ## Follow-up rounds and the end of a turn
 

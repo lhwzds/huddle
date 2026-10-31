@@ -1,6 +1,6 @@
 ---
 title: Huddle
-source: #e2b3f15d412a
+source: #e1f619f1150e
 pages:
   - overview: 概览
   - how-it-works: 一轮对话如何运作
@@ -10,4 +10,4 @@ pages:
   - limits: 限制与已知缺口
 ---
 
-本书面向评估 Huddle 的读者：它做什么，一条消息如何流经运行时，回答途中的引导如何保持一致，以及它的边界在哪里。本书建立在 [README](../../../README.md)、[架构概览](../../architecture.md) 和[规范](../../specs/)之上，不重复其内容。
+本书面向评估 Huddle 的读者：它做什么，一条消息如何流经运行时，回答途中的引导如何保持一致，以及它的边界在哪里。本书建立在[架构概览](../../architecture.md)、[配置](../../configuration.md)、[SECURITY.md](../../../SECURITY.md) 和[规范](../../specs/)之上，不重复其内容。

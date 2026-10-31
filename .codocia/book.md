@@ -2,7 +2,7 @@
 title: Huddle
 repo: ..
 out: docs/book
-commit: 365b1ae0caf7a0192cb153cc5e0acda518dcab57
+commit: 7a9ef26a4ac60761609a9ec407b5907f406c423c
 lang: en
 max_pages: 6
 max_page_words: 900
@@ -16,11 +16,11 @@ pages:
   - testing-and-evaluation: Testing and evaluation
   - limits: Limits and known gaps
 ignore:
-  - **/*.lock
-  - **/package-lock.json
+  - '**/*.lock'
+  - '**/package-lock.json'
   - eval/results/**
   - docs/img/**
-  - **/*.png
+  - '**/*.png'
   - frontend/dist/**
   - frontend/src/styles.css
   - frontend/.prettierrc
@@ -32,4 +32,4 @@ langs:
   - zh
 ---
 
-This book is for someone evaluating Huddle: what it does, how one message flows through the runtime, how mid-answer steering stays consistent, and where it stops. It builds on the [README](../../README.md), the [architecture overview](../architecture.md) and the [specs](../specs/) instead of repeating them.
+This book is for someone evaluating Huddle: what it does, how one message flows through the runtime, how mid-answer steering stays consistent, and where it stops. It builds on the [architecture overview](../architecture.md), [configuration](../configuration.md), [SECURITY.md](../../SECURITY.md) and the [specs](../specs/) instead of repeating them.

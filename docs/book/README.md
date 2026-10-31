@@ -6,7 +6,7 @@ title: Huddle
 
 <sub>**English** · [中文](zh/README.md)</sub>
 
-This book is for someone evaluating Huddle: what it does, how one message flows through the runtime, how mid-answer steering stays consistent, and where it stops. It builds on the [README](../../README.md), the [architecture overview](../architecture.md) and the [specs](../specs/) instead of repeating them.
+This book is for someone evaluating Huddle: what it does, how one message flows through the runtime, how mid-answer steering stays consistent, and where it stops. It builds on the [architecture overview](../architecture.md), [configuration](../configuration.md), [SECURITY.md](../../SECURITY.md) and the [specs](../specs/) instead of repeating them.
 
 ## Contents
 
@@ -21,4 +21,4 @@ This book is for someone evaluating Huddle: what it does, how one message flows 
 
 - [Code structure](structure.md) — generated from the code: areas, dependencies, pages
 
-<sub>Generated from huddle @ `365b1ae0ca`</sub>
+<sub>Generated from huddle @ `7a9ef26a4a`</sub>

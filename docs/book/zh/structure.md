@@ -8,13 +8,13 @@ title: 代码结构
 
 本页由 Codocia 根据代码自动生成，每次 build 重新计算：功能区划分、各区自带的说明、区之间的 import 依赖，以及讲解各区的页面。
 
-范围内共 145 个文件，17,477 行；已排除 `**/*.lock`、`**/package-lock.json`、`eval/results/**`、`docs/img/**`、`**/*.png`、`frontend/dist/**`、`frontend/src/styles.css`、`frontend/.prettierrc`、`frontend/.gitignore`、`frontend/.dockerignore`、`.gitignore`、`.dockerignore`
+范围内共 145 个文件，17,415 行；已排除 `**/*.lock`、`**/package-lock.json`、`eval/results/**`、`docs/img/**`、`**/*.png`、`frontend/dist/**`、`frontend/src/styles.css`、`frontend/.prettierrc`、`frontend/.gitignore`、`frontend/.dockerignore`、`.gitignore`、`.dockerignore`
 
 ## 文件结构
 
 **仓库根目录**
 
-- （根目录文件） — 606 行，7 个文件。Think a question through with a group of AI agents.\
+- （根目录文件） — 476 行，7 个文件。Think a question through with a group of AI agents.\
   讲解：[概览](01-overview.md) (2), [回答途中的引导](03-steering.md) (1), [群组、记忆与工具](04-groups-and-tools.md) (2), [测试与评估](05-testing-and-evaluation.md) (1)
 - `.github/` — 47 行，1 个文件\
   讲解：[测试与评估](05-testing-and-evaluation.md) (1)
@@ -28,15 +28,15 @@ title: 代码结构
 
 - （直接文件） — 34 行，2 个文件\
   讲解：未讲解
-- `tests/` — 3,857 行，14 个文件\
+- `tests/` — 3,902 行，14 个文件\
   讲解：[测试与评估](05-testing-and-evaluation.md) (1)
 
 **`backend/huddle/`**
 
-- （直接文件） — 3,677 行，17 个文件。Huddle backend.\
+- （直接文件） — 3,697 行，17 个文件。Huddle backend.\
   核心文件：`config.py` `tools.py` `store.py`\
   讲解：[概览](01-overview.md) (4), [一轮对话如何运作](02-how-it-works.md) (8), [回答途中的引导](03-steering.md) (9), [群组、记忆与工具](04-groups-and-tools.md) (8), [限制与已知缺口](06-limits.md) (2)
-- `llm/` — 598 行，5 个文件\
+- `llm/` — 601 行，5 个文件\
   核心文件：`__init__.py` `fake.py` `base.py`\
   讲解：[概览](01-overview.md) (2), [一轮对话如何运作](02-how-it-works.md) (1), [测试与评估](05-testing-and-evaluation.md) (1)
 
@@ -81,7 +81,7 @@ title: 代码结构
 
 - （直接文件） — 892 行，3 个文件。A standard-library HTTP service that runs agent shell commands and manages per-conversatio…\
   核心文件：`server.py`\
-  讲解：[群组、记忆与工具](04-groups-and-tools.md) (1)
+  讲解：[群组、记忆与工具](04-groups-and-tools.md) (1), [限制与已知缺口](06-limits.md) (1)
 - `tests/` — 408 行，2 个文件\
   讲解：[测试与评估](05-testing-and-evaluation.md) (1)
 

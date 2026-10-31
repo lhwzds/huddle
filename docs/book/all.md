@@ -6,7 +6,7 @@ title: Huddle — All pages
 
 <sub>**English** · [中文](zh/all.md)</sub>
 
-This book is for someone evaluating Huddle: what it does, how one message flows through the runtime, how mid-answer steering stays consistent, and where it stops. It builds on the [README](../../README.md), the [architecture overview](../architecture.md) and the [specs](../specs/) instead of repeating them.
+This book is for someone evaluating Huddle: what it does, how one message flows through the runtime, how mid-answer steering stays consistent, and where it stops. It builds on the [architecture overview](../architecture.md), [configuration](../configuration.md), [SECURITY.md](../../SECURITY.md) and the [specs](../specs/) instead of repeating them.
 
 <a id="overview"></a>
 
@@ -14,9 +14,9 @@ This book is for someone evaluating Huddle: what it does, how one message flows 
 
 Huddle is a web group chat between one person and a group of AI agents. Each agent has a soul (who it is) and a private memory; several stream answers at once, talk to each other, stay quiet when they would only repeat someone, and can be redirected while they write, in the same message.
 
-Two objects carry the runtime: the per-conversation `Orchestrator` decides who speaks ([How a turn works](#how-it-works)), and one `AgentRun` per visible message writes it and absorbs steers ([Steering mid-answer](#steering)). The [README](../../README.md) lists what to try, the [architecture overview](../architecture.md) has the diagrams and [configuration](../configuration.md) every setting; [Code structure](#structure) shows the code layout. Huddle is Apache-2.0 licensed; [CONTRIBUTING.md](../../CONTRIBUTING.md) says where changes go.
+Two objects carry the runtime: the per-conversation `Orchestrator` decides who speaks ([How a turn works](#how-it-works)), and one `AgentRun` per visible message writes it and absorbs steers ([Steering mid-answer](#steering)). The [architecture overview](../architecture.md) has the diagrams and design decisions, [configuration](../configuration.md) every setting and [SECURITY.md](../../SECURITY.md) what the sandbox defends; [Code structure](#structure) shows the code layout. Huddle is Apache-2.0 licensed; [CONTRIBUTING.md](../../CONTRIBUTING.md) says where changes go.
 
-<sub>Sources: [orchestrator.py:30-44](../../backend/huddle/orchestrator.py#L30-L44) · [agent.py:64-93](../../backend/huddle/agent.py#L64-L93) · [LICENSE:1-3](../../LICENSE#L1-L3)</sub>
+<sub>Sources: [orchestrator.py:30-44](../../backend/huddle/orchestrator.py#L30-L44) · [agent.py:65-97](../../backend/huddle/agent.py#L65-L97) · [LICENSE:1-3](../../LICENSE#L1-L3)</sub>
 
 ### Running it
 
@@ -38,7 +38,7 @@ Every call passes a *profile*: `decide`, `steer`, `utility`, or the effort level
 
 ### Provider quirks stay in adapters
 
-The runtime sees one stream of `TextDelta`, `ToolCallDone` and `Done` events. `OpenAIChat` hides the differences: `_ThinkFilter` drops `<think>` blocks, `_MarkupFilter` cuts native tool-call markup some models write as text, and with `reasoning_passback` (set for `deepseek`) every assistant message carries its `reasoning_content`, which thinking models require once tools are involved. Transport errors, 429 and 5xx are retried only before the first event is yielded, so a retry can never duplicate visible text.
+The runtime sees one stream of `TextDelta`, `ToolCallDone` and `Done` events. `OpenAIChat` hides the differences: `_ThinkFilter` drops `<think>` blocks, `_MarkupFilter` cuts native tool-call markup some models write as text (and reports the cut as `wanted_tools` on `Done`, see [Steering mid-answer](#steering)), and with `reasoning_passback` (set for `deepseek`) every assistant message carries its `reasoning_content`, which thinking models require once tools are involved. Transport errors, 429 and 5xx are retried only before the first event is yielded, so a retry can never duplicate visible text.
 
 <sub>Sources: [openai_chat.py:15-41](../../backend/huddle/llm/openai_chat.py#L15-L41) · [openai_chat.py:61-88](../../backend/huddle/llm/openai_chat.py#L61-L88) · [openai_chat.py:101-186](../../backend/huddle/llm/openai_chat.py#L101-L186) · [huddle.yaml:14-23](../../config/huddle.yaml#L14-L23)</sub>
 
@@ -89,7 +89,7 @@ Each round, every candidate makes a small `decide` call from its *own* context (
 
 Code then bounds the model's choices in round 0: if nobody wants to speak, one agent is chosen (the addressed one, one with a point, or whoever spoke last), so every new question gets a reply (a message that only steered writers is the exception, see [Steering mid-answer](#steering)); a request for a file raises the writer to `deep`; several `light` answers to an unaddressed question collapse to one; and some messages open a free discussion ([Groups, memory and tools](#groups-and-tools)).
 
-<sub>Sources: [orchestrator.py:249-278](../../backend/huddle/orchestrator.py#L249-L278) · [orchestrator.py:385-403](../../backend/huddle/orchestrator.py#L385-L403) · [orchestrator.py:414-425](../../backend/huddle/orchestrator.py#L414-L425) · [prompts.py:105-130](../../backend/huddle/prompts.py#L105-L130) · [base.py:48-97](../../backend/huddle/llm/base.py#L48-L97)</sub>
+<sub>Sources: [orchestrator.py:249-278](../../backend/huddle/orchestrator.py#L249-L278) · [orchestrator.py:385-403](../../backend/huddle/orchestrator.py#L385-L403) · [orchestrator.py:414-425](../../backend/huddle/orchestrator.py#L414-L425) · [prompts.py:105-130](../../backend/huddle/prompts.py#L105-L130) · [base.py:49-98](../../backend/huddle/llm/base.py#L49-L98)</sub>
 
 ### Parallel start, held output
 
@@ -97,7 +97,7 @@ When two or more agents want to speak, their runs start immediately but *held*: 
 
 This overlaps generation with deduplication, so a busy turn pays no extra latency for staying quiet. A message's position is fixed when it is published, not when the agent started thinking.
 
-<sub>Sources: [orchestrator.py:431-455](../../backend/huddle/orchestrator.py#L431-L455) · [orchestrator.py:280-323](../../backend/huddle/orchestrator.py#L280-L323) · [agent.py:97-126](../../backend/huddle/agent.py#L97-L126) · [agent.py:158-192](../../backend/huddle/agent.py#L158-L192)</sub>
+<sub>Sources: [orchestrator.py:431-455](../../backend/huddle/orchestrator.py#L431-L455) · [orchestrator.py:280-323](../../backend/huddle/orchestrator.py#L280-L323) · [agent.py:99-128](../../backend/huddle/agent.py#L99-L128) · [agent.py:160-197](../../backend/huddle/agent.py#L160-L197)</sub>
 
 ### Follow-up rounds and the end of a turn
 
@@ -121,7 +121,7 @@ To fit `context_tokens`, whole transcript blocks are dropped oldest first, so a 
 
 A steer is a user message that arrives while an agent is writing. Huddle does not stop the agent and start a new reply: the same message continues from exactly what the reader has seen, with the request applied. The loop is Huddle's own (no agent framework), because it has to race a model stream against an inbox and keep the event log consistent. The [architecture overview](../architecture.md) has the sequence diagram.
 
-<sub>Sources: [agent.py:64-93](../../backend/huddle/agent.py#L64-L93) · [AGENTS.md:5-6](../../AGENTS.md#L5-L6) · [CONTRIBUTING.md:3-4](../../CONTRIBUTING.md#L3-L4)</sub>
+<sub>Sources: [agent.py:65-97](../../backend/huddle/agent.py#L65-L97) · [AGENTS.md:5-6](../../AGENTS.md#L5-L6) · [CONTRIBUTING.md:3-4](../../CONTRIBUTING.md#L3-L4)</sub>
 
 ### The run loop
 
@@ -129,18 +129,19 @@ A steer is a user message that arrives while an agent is writing. Huddle does no
 
 - steers arrived → loop again at once (a continuation);
 - held → wait for release or a steer;
-- tool calls → run them, then loop;
+- tool calls → run them, then loop (the tool budget is on [Groups, memory and tools](#groups-and-tools));
+- no tools offered, but the model tried one (`_wanted_tools`) → once, write the same message again at `deep` effort, keeping its steer;
 - otherwise → under the lock, drain the inbox once more and only if it is empty mark the message `done`.
 
-`finished` is set before that lock is released, and `steer()` refuses a finished run. A steer is therefore either taken by this run or refused and handled as a new reply; it is never lost between the two.
+`finished` is set before that lock is released, and `steer()` refuses a finished run. A steer is therefore either taken by this run or refused and handled as a new reply; it is never lost between the two. `_text` drops blank lines at the start of a message, so an empty reply leaves no empty message.
 
-<sub>Sources: [agent.py:378-415](../../backend/huddle/agent.py#L378-L415) · [agent.py:426-446](../../backend/huddle/agent.py#L426-L446) · [agent.py:128-132](../../backend/huddle/agent.py#L128-L132)</sub>
+<sub>Sources: [agent.py:384-424](../../backend/huddle/agent.py#L384-L424) · [agent.py:435-466](../../backend/huddle/agent.py#L435-L466) · [agent.py:177-180](../../backend/huddle/agent.py#L177-L180) · [agent.py:130-134](../../backend/huddle/agent.py#L130-L134)</sub>
 
 ### Racing the stream against the inbox
 
 `_stream` keeps two tasks alive: the next model event and `inbox.get()`. Text is buffered and flushed as `message.delta` in small time-based batches (`flush_interval_s`). When a steer wins the race, a delta that already arrived is still consumed and flushed, never dropped, and the `finally` block closes the generator, which closes the provider's HTTP stream. The reader keeps exactly what was published, and the next call starts from it.
 
-<sub>Sources: [agent.py:201-264](../../backend/huddle/agent.py#L201-L264)</sub>
+<sub>Sources: [agent.py:206-270](../../backend/huddle/agent.py#L206-L270)</sub>
 
 ### Continuing the same message
 
@@ -148,13 +149,13 @@ For a continuation, `build_context` moves the agent's own partial message to the
 
 New text joins the old with `seam`: "… " when the cut fell mid-word, a space after punctuation. A leading ellipsis from the model is stripped so the seam never doubles. Everything goes to the same message id, so the chat shows one message that changes direction.
 
-<sub>Sources: [context.py:97-106](../../backend/huddle/context.py#L97-L106) · [prompts.py:22-35](../../backend/huddle/prompts.py#L22-L35) · [prompts.py:164-182](../../backend/huddle/prompts.py#L164-L182) · [agent.py:175-187](../../backend/huddle/agent.py#L175-L187)</sub>
+<sub>Sources: [context.py:97-106](../../backend/huddle/context.py#L97-L106) · [prompts.py:22-35](../../backend/huddle/prompts.py#L22-L35) · [prompts.py:164-182](../../backend/huddle/prompts.py#L164-L182) · [agent.py:181-189](../../backend/huddle/agent.py#L181-L189)</sub>
 
 ### Steers during tool work
 
 Between model calls a steer simply lands in the next call. While a command runs, `_tools` races the tool task against the inbox; a steer kills the workspace's commands through `sandbox.kill` and answers the call with an "interrupted" result, as it does for any remaining calls in the batch. A held run waiting for dedupe also listens to its inbox, so a steer is not lost while the run is invisible.
 
-<sub>Sources: [agent.py:312-376](../../backend/huddle/agent.py#L312-L376) · [agent.py:112-126](../../backend/huddle/agent.py#L112-L126)</sub>
+<sub>Sources: [agent.py:318-382](../../backend/huddle/agent.py#L318-L382) · [agent.py:114-128](../../backend/huddle/agent.py#L114-L128)</sub>
 
 ### Who is steered
 
@@ -166,7 +167,7 @@ A message that names agents steers only those runs; the others keep writing unto
 
 A message that is only a stop phrase (optionally with names; the phrases are in `config/language.yaml`), or the Stop button, ends work instead of steering. Under the lock `_stop_locked` cancels the targeted runs and every instruction extraction, marks their streaming messages `stopped` and clears typing; the cancelled tasks are awaited only after the lock is released, so a newer turn's output is never swept up. A cancelled run discards its unflushed buffer: a stop adds no text. An unnamed follow-up right after a stop ("ok, the short version") is addressed to the stopped agent.
 
-<sub>Sources: [orchestrator.py:502-550](../../backend/huddle/orchestrator.py#L502-L550) · [orchestrator.py:330-340](../../backend/huddle/orchestrator.py#L330-L340) · [agent.py:447-451](../../backend/huddle/agent.py#L447-L451) · [language.yaml:5-6](../../config/language.yaml#L5-L6)</sub>
+<sub>Sources: [orchestrator.py:502-550](../../backend/huddle/orchestrator.py#L502-L550) · [orchestrator.py:330-340](../../backend/huddle/orchestrator.py#L330-L340) · [agent.py:467-471](../../backend/huddle/agent.py#L467-L471) · [language.yaml:5-6](../../config/language.yaml#L5-L6)</sub>
 
 ### Standing instructions
 
@@ -208,7 +209,7 @@ The app edits members through `/api/groups/{group}/agents` and the group's share
 
 `remember` appends one short note to the agent's own memory under `## Remembered`. Memory is shared by every conversation of the group, so the tool is offered, once per message, only when the person's message (or a steer that reaches the run) mentions remembering: the `remember` patterns in `config/language.yaml` set `RunContext.can_remember`. Execution checks again: a `remember` call without it, or a call for any tool that was not offered, is answered with an error and never run. Notes are capped at `remember_note` characters; a full memory refuses a note instead of truncating older facts.
 
-<sub>Sources: [agents.py:220-237](../../backend/huddle/agents.py#L220-L237) · [agent.py:301-310](../../backend/huddle/agent.py#L301-L310) · [agent.py:422-425](../../backend/huddle/agent.py#L422-L425) · [agent.py:326-329](../../backend/huddle/agent.py#L326-L329) · [orchestrator.py:433-435](../../backend/huddle/orchestrator.py#L433-L435) · +2</sub>
+<sub>Sources: [agents.py:220-237](../../backend/huddle/agents.py#L220-L237) · [agent.py:307-316](../../backend/huddle/agent.py#L307-L316) · [agent.py:431-434](../../backend/huddle/agent.py#L431-L434) · [agent.py:332-335](../../backend/huddle/agent.py#L332-L335) · [orchestrator.py:433-435](../../backend/huddle/orchestrator.py#L433-L435) · +2</sub>
 
 ### Free discussion
 
@@ -228,7 +229,7 @@ Questions like "should we take the deal?" need facts that sit in different memor
 
 Effort sets a message's length guidance, token cap and tool budget; only `deep` has a sandbox tool budget (`max_tool_steps`). Once a run has used tools it keeps being offered them for `tool_budget_grace_steps` more steps, but those calls return "budget used up": withdrawing tools mid-run made some models write raw tool markup as text. After the grace steps the tools are withdrawn, which ends a model that keeps calling. Web calls have their own cap per message. After each batch the run compares the workspace listing before and after and emits `file.changed`, which refreshes the Files panel.
 
-<sub>Sources: [huddle.yaml:56-59](../../config/huddle.yaml#L56-L59) · [agent.py:416-421](../../backend/huddle/agent.py#L416-L421) · [agent.py:371-376](../../backend/huddle/agent.py#L371-L376) · [prompts.py:6-10](../../backend/huddle/prompts.py#L6-L10)</sub>
+<sub>Sources: [huddle.yaml:56-59](../../config/huddle.yaml#L56-L59) · [agent.py:425-430](../../backend/huddle/agent.py#L425-L430) · [agent.py:377-382](../../backend/huddle/agent.py#L377-L382) · [prompts.py:6-10](../../backend/huddle/prompts.py#L6-L10)</sub>
 
 ### Web research
 
@@ -246,7 +247,7 @@ Because the sandbox has no network, `web_search` and `fetch_url` run in the back
 
 ## Testing and evaluation
 
-Two layers check Huddle. Unit and integration tests run offline against a scripted model; the evaluation runner drives a running instance with a real model and scores the conversation it gets back. Commands for both are in the [README](../../README.md); the test plan is in [the testing spec](../specs/testing.md) and the dataset format in [the eval spec](../specs/eval.md).
+Two layers check Huddle. Unit and integration tests run offline against a scripted model; the evaluation runner drives a running instance with a real model and scores the conversation it gets back. The test commands are in [CONTRIBUTING.md](../../CONTRIBUTING.md); the test plan is in [the testing spec](../specs/testing.md), and [the eval spec](../specs/eval.md) has the dataset format and the runner command.
 
 <sub>Sources: [AGENTS.md:5-12](../../AGENTS.md#L5-L12)</sub>
 
@@ -256,7 +257,7 @@ Backend tests never touch the network. `FakeLLM` replies by rules keyed on agent
 
 Frontend tests (Vitest) cover the event reducer, including gap detection, plus group, profile and follow-scroll helpers. Sandbox tests start the real service and run real processes. Eval tests run the checks, metrics and transcript markers on small synthetic event logs. CI runs all four suites on every push and pull request; [CONTRIBUTING.md](../../CONTRIBUTING.md) lists the same commands.
 
-<sub>Sources: [fake.py:1-45](../../backend/huddle/llm/fake.py#L1-L45) · [conftest.py:13-38](../../backend/tests/conftest.py#L13-L38) · [test_runtime.py:277-308](../../backend/tests/test_runtime.py#L277-L308) · [state.test.ts:44-58](../../frontend/test/state.test.ts#L44-L58) · [test_server.py:15-30](../../sandbox/tests/test_server.py#L15-L30) · +2</sub>
+<sub>Sources: [fake.py:1-46](../../backend/huddle/llm/fake.py#L1-L46) · [conftest.py:13-38](../../backend/tests/conftest.py#L13-L38) · [test_runtime.py:277-308](../../backend/tests/test_runtime.py#L277-L308) · [state.test.ts:44-58](../../frontend/test/state.test.ts#L44-L58) · [test_server.py:15-30](../../sandbox/tests/test_server.py#L15-L30) · +2</sub>
 
 ### The evaluation dataset
 
@@ -282,9 +283,16 @@ Two numbers per send. First word: time from the send returning to the first text
 
 ## Limits and known gaps
 
-Huddle's scope cuts are deliberate: one process and one user, no accounts, running answers kept in memory (a restart marks them stopped), one shared sandbox container isolated by workspace directory, and groups shared by everyone who uses an instance. The [README](../../README.md#scope-cuts-and-known-gaps) lists the known gaps it measured and [SECURITY.md](../../SECURITY.md) the security limits. The notes below add gaps that follow from the code at this commit.
+Huddle's scope cuts are deliberate and visible in the code:
 
-<sub>Sources: [orchestrator.py:35-36](../../backend/huddle/orchestrator.py#L35-L36) · [main.py:64-66](../../backend/huddle/main.py#L64-L66)</sub>
+- **One process.** Each `Orchestrator` keeps its conversations and their running answers in memory; at startup `stop_streaming_on_startup` marks every message still `streaming` as `stopped`, so a restart ends answers in progress.
+- **One user, no accounts.** `has_access` checks a single invite code (or none); whoever passes it sees every conversation.
+- **One sandbox container.** Each conversation gets its own workspace directory under one root, but commands run as the same user, so the directory is a separation, not a security boundary.
+- **Shared groups.** `AgentRegistry` holds one set of groups per instance; an edit applies to everyone.
+
+[SECURITY.md](../../SECURITY.md) lists the security limits. The notes below add gaps that follow from the code at this commit.
+
+<sub>Sources: [orchestrator.py:35-37](../../backend/huddle/orchestrator.py#L35-L37) · [main.py:64-66](../../backend/huddle/main.py#L64-L66) · [store.py:362-364](../../backend/huddle/store.py#L362-L364) · [guards.py:205-210](../../backend/huddle/guards.py#L205-L210) · [server.py:261-269](../../sandbox/server.py#L261-L269) · +1</sub>
 
 ### Gaps visible in the code
 
@@ -295,7 +303,7 @@ Huddle's scope cuts are deliberate: one process and one user, no accounts, runni
 - **Long conversations forget.** Context trimming drops the oldest transcript first; a protected continuation may still exceed the limit.
 - **DNS rebinding is closed for page reads only**: `fetch_url` connects only to an address it just checked ([Groups, memory and tools](#groups-and-tools)); `web_search` uses a plain client against its fixed search URL.
 
-<sub>Sources: [agent.py:273-293](../../backend/huddle/agent.py#L273-L293) · [orchestrator.py:218-242](../../backend/huddle/orchestrator.py#L218-L242) · [orchestrator.py:280-299](../../backend/huddle/orchestrator.py#L280-L299) · [store.py:103-111](../../backend/huddle/store.py#L103-L111) · [context.py:124-132](../../backend/huddle/context.py#L124-L132) · +2</sub>
+<sub>Sources: [agent.py:279-299](../../backend/huddle/agent.py#L279-L299) · [orchestrator.py:218-242](../../backend/huddle/orchestrator.py#L218-L242) · [orchestrator.py:280-299](../../backend/huddle/orchestrator.py#L280-L299) · [store.py:103-111](../../backend/huddle/store.py#L103-L111) · [context.py:124-132](../../backend/huddle/context.py#L124-L132) · +2</sub>
 
 <a id="structure"></a>
 
@@ -303,13 +311,13 @@ Huddle's scope cuts are deliberate: one process and one user, no accounts, runni
 
 Generated by Codocia from the code on every build: areas, each area's own description, import dependencies between areas, and the pages that explain them.
 
-In scope: 145 files, 17,477 lines; excluded `**/*.lock`, `**/package-lock.json`, `eval/results/**`, `docs/img/**`, `**/*.png`, `frontend/dist/**`, `frontend/src/styles.css`, `frontend/.prettierrc`, `frontend/.gitignore`, `frontend/.dockerignore`, `.gitignore`, `.dockerignore`
+In scope: 145 files, 17,415 lines; excluded `**/*.lock`, `**/package-lock.json`, `eval/results/**`, `docs/img/**`, `**/*.png`, `frontend/dist/**`, `frontend/src/styles.css`, `frontend/.prettierrc`, `frontend/.gitignore`, `frontend/.dockerignore`, `.gitignore`, `.dockerignore`
 
 ### Files
 
 **Repository root**
 
-- (root files) — 606 lines, 7 files. Think a question through with a group of AI agents.\
+- (root files) — 476 lines, 7 files. Think a question through with a group of AI agents.\
   Explained in: [Overview](#overview) (2), [Steering mid-answer](#steering) (1), [Groups, memory and tools](#groups-and-tools) (2), [Testing and evaluation](#testing-and-evaluation) (1)
 - `.github/` — 47 lines, 1 file\
   Explained in: [Testing and evaluation](#testing-and-evaluation) (1)
@@ -323,15 +331,15 @@ In scope: 145 files, 17,477 lines; excluded `**/*.lock`, `**/package-lock.json`,
 
 - (files) — 34 lines, 2 files\
   Explained in: not covered
-- `tests/` — 3,857 lines, 14 files\
+- `tests/` — 3,902 lines, 14 files\
   Explained in: [Testing and evaluation](#testing-and-evaluation) (1)
 
 **`backend/huddle/`**
 
-- (files) — 3,677 lines, 17 files. Huddle backend.\
+- (files) — 3,697 lines, 17 files. Huddle backend.\
   Hub files: `config.py` `tools.py` `store.py`\
   Explained in: [Overview](#overview) (4), [How a turn works](#how-it-works) (8), [Steering mid-answer](#steering) (9), [Groups, memory and tools](#groups-and-tools) (8), [Limits and known gaps](#limits) (2)
-- `llm/` — 598 lines, 5 files\
+- `llm/` — 601 lines, 5 files\
   Hub files: `__init__.py` `fake.py` `base.py`\
   Explained in: [Overview](#overview) (2), [How a turn works](#how-it-works) (1), [Testing and evaluation](#testing-and-evaluation) (1)
 
@@ -376,7 +384,7 @@ In scope: 145 files, 17,477 lines; excluded `**/*.lock`, `**/package-lock.json`,
 
 - (files) — 892 lines, 3 files. A standard-library HTTP service that runs agent shell commands and manages per-conversatio…\
   Hub files: `server.py`\
-  Explained in: [Groups, memory and tools](#groups-and-tools) (1)
+  Explained in: [Groups, memory and tools](#groups-and-tools) (1), [Limits and known gaps](#limits) (1)
 - `tests/` — 408 lines, 2 files\
   Explained in: [Testing and evaluation](#testing-and-evaluation) (1)
 

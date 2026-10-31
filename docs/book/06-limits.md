@@ -6,9 +6,16 @@ title: Limits and known gaps
 
 <sub>**English** · [中文](zh/06-limits.md)</sub>
 
-Huddle's scope cuts are deliberate: one process and one user, no accounts, running answers kept in memory (a restart marks them stopped), one shared sandbox container isolated by workspace directory, and groups shared by everyone who uses an instance. The [README](../../README.md#scope-cuts-and-known-gaps) lists the known gaps it measured and [SECURITY.md](../../SECURITY.md) the security limits. The notes below add gaps that follow from the code at this commit.
+Huddle's scope cuts are deliberate and visible in the code:
 
-<sub>Sources: [orchestrator.py:35-36](../../backend/huddle/orchestrator.py#L35-L36) · [main.py:64-66](../../backend/huddle/main.py#L64-L66)</sub>
+- **One process.** Each `Orchestrator` keeps its conversations and their running answers in memory; at startup `stop_streaming_on_startup` marks every message still `streaming` as `stopped`, so a restart ends answers in progress.
+- **One user, no accounts.** `has_access` checks a single invite code (or none); whoever passes it sees every conversation.
+- **One sandbox container.** Each conversation gets its own workspace directory under one root, but commands run as the same user, so the directory is a separation, not a security boundary.
+- **Shared groups.** `AgentRegistry` holds one set of groups per instance; an edit applies to everyone.
+
+[SECURITY.md](../../SECURITY.md) lists the security limits. The notes below add gaps that follow from the code at this commit.
+
+<sub>Sources: [orchestrator.py:35-37](../../backend/huddle/orchestrator.py#L35-L37) · [main.py:64-66](../../backend/huddle/main.py#L64-L66) · [store.py:362-364](../../backend/huddle/store.py#L362-L364) · [guards.py:205-210](../../backend/huddle/guards.py#L205-L210) · [server.py:261-269](../../sandbox/server.py#L261-L269) · +1</sub>
 
 ## Gaps visible in the code
 
@@ -19,4 +26,4 @@ Huddle's scope cuts are deliberate: one process and one user, no accounts, runni
 - **Long conversations forget.** Context trimming drops the oldest transcript first; a protected continuation may still exceed the limit.
 - **DNS rebinding is closed for page reads only**: `fetch_url` connects only to an address it just checked ([Groups, memory and tools](04-groups-and-tools.md)); `web_search` uses a plain client against its fixed search URL.
 
-<sub>Sources: [agent.py:273-293](../../backend/huddle/agent.py#L273-L293) · [orchestrator.py:218-242](../../backend/huddle/orchestrator.py#L218-L242) · [orchestrator.py:280-299](../../backend/huddle/orchestrator.py#L280-L299) · [store.py:103-111](../../backend/huddle/store.py#L103-L111) · [context.py:124-132](../../backend/huddle/context.py#L124-L132) · +2</sub>
+<sub>Sources: [agent.py:279-299](../../backend/huddle/agent.py#L279-L299) · [orchestrator.py:218-242](../../backend/huddle/orchestrator.py#L218-L242) · [orchestrator.py:280-299](../../backend/huddle/orchestrator.py#L280-L299) · [store.py:103-111](../../backend/huddle/store.py#L103-L111) · [context.py:124-132](../../backend/huddle/context.py#L124-L132) · +2</sub>

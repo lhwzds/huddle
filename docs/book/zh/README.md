@@ -6,7 +6,7 @@ title: Huddle
 
 <sub>[English](../README.md) · **中文**</sub>
 
-本书面向评估 Huddle 的读者：它做什么，一条消息如何流经运行时，回答途中的引导如何保持一致，以及它的边界在哪里。本书建立在 [README](../../../README.md)、[架构概览](../../architecture.md) 和[规范](../../specs/)之上，不重复其内容。
+本书面向评估 Huddle 的读者：它做什么，一条消息如何流经运行时，回答途中的引导如何保持一致，以及它的边界在哪里。本书建立在[架构概览](../../architecture.md)、[配置](../../configuration.md)、[SECURITY.md](../../../SECURITY.md) 和[规范](../../specs/)之上，不重复其内容。
 
 ## 目录
 
@@ -21,4 +21,4 @@ title: Huddle
 
 - [代码结构](structure.md) — 从代码生成：功能区、依赖、讲解页
 
-<sub>生成自 huddle @ `365b1ae0ca`</sub>
+<sub>生成自 huddle @ `7a9ef26a4a`</sub>

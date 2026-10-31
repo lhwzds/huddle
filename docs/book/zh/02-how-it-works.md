@@ -43,7 +43,7 @@ title: 一轮对话如何运作
 
 随后代码在第 0 回合约束模型的选择：若无人想发言，就选出一位（被点名者、有观点者，或上一个发言者），所以每个新问题都有回复（只引导了正在写的智能体的消息是例外，见 [回答途中的引导](03-steering.md)）；请求文件会把写作者提升到 `deep`；对未点名问题的多个 `light` 回答合并为一个；有些消息会开启自由讨论（[群组、记忆与工具](04-groups-and-tools.md)）。
 
-<sub>来源: [orchestrator.py:249-278](../../../backend/huddle/orchestrator.py#L249-L278) · [orchestrator.py:385-403](../../../backend/huddle/orchestrator.py#L385-L403) · [orchestrator.py:414-425](../../../backend/huddle/orchestrator.py#L414-L425) · [prompts.py:105-130](../../../backend/huddle/prompts.py#L105-L130) · [base.py:48-97](../../../backend/huddle/llm/base.py#L48-L97)</sub>
+<sub>来源: [orchestrator.py:249-278](../../../backend/huddle/orchestrator.py#L249-L278) · [orchestrator.py:385-403](../../../backend/huddle/orchestrator.py#L385-L403) · [orchestrator.py:414-425](../../../backend/huddle/orchestrator.py#L414-L425) · [prompts.py:105-130](../../../backend/huddle/prompts.py#L105-L130) · [base.py:49-98](../../../backend/huddle/llm/base.py#L49-L98)</sub>
 
 ## 并行开始，暂扣输出
 
@@ -51,7 +51,7 @@ title: 一轮对话如何运作
 
 这样生成与去重重叠进行，繁忙的一轮不会因为保持安静而多付延迟。消息的位置在发布时固定，而不是在智能体开始思考时。
 
-<sub>来源: [orchestrator.py:431-455](../../../backend/huddle/orchestrator.py#L431-L455) · [orchestrator.py:280-323](../../../backend/huddle/orchestrator.py#L280-L323) · [agent.py:97-126](../../../backend/huddle/agent.py#L97-L126) · [agent.py:158-192](../../../backend/huddle/agent.py#L158-L192)</sub>
+<sub>来源: [orchestrator.py:431-455](../../../backend/huddle/orchestrator.py#L431-L455) · [orchestrator.py:280-323](../../../backend/huddle/orchestrator.py#L280-L323) · [agent.py:99-128](../../../backend/huddle/agent.py#L99-L128) · [agent.py:160-197](../../../backend/huddle/agent.py#L160-L197)</sub>
 
 ## 后续回合与一轮的结束
 
